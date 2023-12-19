@@ -1,6 +1,6 @@
 import supertest from 'supertest';
 import { app } from '../src/application/web';
-import { deleteTestUser } from './test-utils';
+import { createTestUser, deleteTestUser } from './test-utils';
 
 describe('POST users/register', () => {
   it('create user', async () => {
@@ -66,6 +66,48 @@ describe('POST users/register', () => {
 
     expect(res.status).toBe(400);
     console.log(res.body);
+    expect(res.body.errors).toBeDefined();
+  });
+});
+
+describe.only('POST users/login', () => {
+  beforeEach(async () => {
+    await createTestUser();
+  });
+
+  afterEach(async () => {
+    await deleteTestUser();
+  });
+
+  it('login a user', async () => {
+    const res = await supertest(app).post('/users/login').send({
+      email: 'test@test.com',
+      password: 'test',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.errors).toBeUndefined();
+    expect(res.body.data.token).toBeDefined();
+    expect(res.body.data.token).not.toBe('test');
+  });
+
+  it('not login if password or email invalid', async () => {
+    const res = await supertest(app).post('/users/login').send({
+      email: '',
+      password: '',
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.errors).toBeDefined();
+  });
+
+  it('not login if password or email doesnt wrong', async () => {
+    const res = await supertest(app).post('/users/login').send({
+      email: 'test@gmail.com',
+      password: 'wrongpasword',
+    });
+
+    expect(res.status).toBe(400);
     expect(res.body.errors).toBeDefined();
   });
 });
