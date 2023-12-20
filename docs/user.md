@@ -87,8 +87,7 @@
   ```json
   {
     "data": {
-      "name": "New Full Name",
-      "password": "updated_secure_password"
+      "name": "New Full Name"
     }
   }
   ```

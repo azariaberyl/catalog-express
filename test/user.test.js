@@ -1,6 +1,8 @@
 import supertest from 'supertest';
 import { app } from '../src/application/web';
 import { createTestUser, deleteTestUser } from './test-utils';
+import { prismaClient } from '../src/application/database';
+import { compare, hash } from 'bcrypt';
 
 describe('POST users/register', () => {
   it('create user', async () => {
@@ -65,12 +67,11 @@ describe('POST users/register', () => {
     });
 
     expect(res.status).toBe(400);
-    console.log(res.body);
     expect(res.body.errors).toBeDefined();
   });
 });
 
-describe.only('POST users/login', () => {
+describe('POST users/login', () => {
   beforeEach(async () => {
     await createTestUser();
   });
@@ -101,7 +102,7 @@ describe.only('POST users/login', () => {
     expect(res.body.errors).toBeDefined();
   });
 
-  it('not login if password or email doesnt wrong', async () => {
+  it('not login if password or email wrong', async () => {
     const res = await supertest(app).post('/users/login').send({
       email: 'test@gmail.com',
       password: 'wrongpasword',
@@ -109,5 +110,65 @@ describe.only('POST users/login', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.errors).toBeDefined();
+    expect(res.body.errors).toBe('Invalid email or password');
+  });
+});
+
+describe('PATCH users/current', () => {
+  beforeEach(async () => {
+    await createTestUser();
+  });
+  afterEach(async () => {
+    await deleteTestUser();
+  });
+
+  it('update user', async () => {
+    const result = await supertest(app).patch('/users/current').set('Authorization', 'test').send({
+      name: 'New Full Name', // Optional
+      password: 'new_secure_password', // Optional
+    });
+
+    expect(result.status).toBe(200);
+    const user = await prismaClient.user.findUnique({
+      where: {
+        username: 'test',
+      },
+    });
+    expect(user.name).toBe('New Full Name');
+    expect(await compare('new_secure_password', user.password)).toBe(true);
+  });
+
+  it('not update user if no data is sent', async () => {
+    const result = await supertest(app).patch('/users/current').set('Authorization', 'test');
+
+    console.log(result.body);
+    expect(result.status).toBe(200);
+    const user = await prismaClient.user.findUnique({
+      where: {
+        username: 'test',
+      },
+    });
+    expect(user.name).toBe('test');
+    expect(await compare('test', user.password)).toBe(true);
+  });
+
+  it('not update user if no token', async () => {
+    const result = await supertest(app).patch('/users/current').send({
+      name: 'New Full Name', // Optional
+      password: 'new_secure_password', // Optional
+    });
+
+    expect(result.status).toBe(401);
+    expect(result.body.errors).toBe('Unauthorized');
+  });
+
+  it('not update user if token invalid', async () => {
+    const result = await supertest(app).patch('/users/current').set('Authorization', 'wrongtoken').send({
+      name: 'New Full Name', // Optional
+      password: 'new_secure_password', // Optional
+    });
+
+    expect(result.status).toBe(401);
+    expect(result.body.errors).toBe('Unauthorized, Please login again');
   });
 });

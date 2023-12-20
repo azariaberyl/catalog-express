@@ -2,8 +2,9 @@ import { validation } from '../validation/validate';
 import bcrypt from 'bcrypt';
 import { prismaClient } from '../application/database.js';
 import ResponseError from '../error/response-error.js';
-import { loginUserValidation, registerUserValidation } from '../validation/user-validation.js';
+import { loginUserValidation, registerUserValidation, updateUserValidation } from '../validation/user-validation.js';
 import { v4 as uuid } from 'uuid';
+import { logger } from '../application/logging.js';
 
 const register = async (request) => {
   const user = validation(registerUserValidation, request);
@@ -74,9 +75,42 @@ const login = async (request) => {
       },
     });
   }
+  throw new ResponseError(400, 'Invalid email or password');
+};
+
+const update = async (request) => {
+  const result = validation(updateUserValidation, request);
+  const userCount = await prismaClient.user.count({
+    where: {
+      username: result.username,
+    },
+  });
+
+  if (userCount !== 1) {
+    throw new ResponseError(404, 'User not found');
+  }
+
+  const data = {};
+  if (result.name) {
+    data.name = result.name;
+  }
+  if (result.password) {
+    data.password = await bcrypt.hash(result.password, 10);
+  }
+
+  return prismaClient.user.update({
+    where: {
+      username: result.username,
+    },
+    data,
+    select: {
+      name: true,
+    },
+  });
 };
 
 export default {
   register,
   login,
+  update,
 };
