@@ -21,12 +21,13 @@ const deleteTestUser = async () => {
   });
 };
 
-const createTestCatalog = async () => {
+const createTestCatalog = async (title, desc) => {
+  const id = crypto.randomUUID();
   await prismaClient.catalog.create({
     data: {
-      title: 'test',
-      desc: 'test',
-      id: 'test',
+      title: 'test ' + title,
+      desc: 'test ' + desc,
+      id,
       user_id: 'test',
     },
   });
@@ -35,7 +36,9 @@ const createTestCatalog = async () => {
 const deleteTestCatalog = async () => {
   await prismaClient.catalog.deleteMany({
     where: {
-      title: 'test',
+      title: {
+        startsWith: 'test',
+      },
     },
   });
 };

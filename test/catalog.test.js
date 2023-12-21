@@ -1,6 +1,7 @@
 import supertest from 'supertest';
 import { app } from '../src/application/web';
-import { createTestUser, deleteTestCatalog, deleteTestUser } from './test-utils';
+import { createTestCatalog, createTestUser, deleteTestCatalog, deleteTestUser } from './test-utils';
+import { logger } from '../src/application/logging';
 
 describe('POST /catalog/create', () => {
   beforeEach(async () => {
@@ -49,5 +50,34 @@ describe('POST /catalog/create', () => {
 
     expect(result.status).toBe(400);
     expect(result.body.errors).toBe('ValidationError: "title" is required');
+  });
+});
+
+describe.only('GET /catalog/:username', () => {
+  beforeEach(async () => {
+    await createTestUser();
+    await createTestCatalog('1');
+    await createTestCatalog('2');
+  });
+  afterEach(async () => {
+    await deleteTestCatalog();
+    await deleteTestUser();
+  });
+
+  it('Get all  catalog', async () => {
+    const result = await supertest(app).get('/catalog/test');
+
+    expect(result.status).toBe(200);
+    expect(result.body.data.catalog).toBeDefined();
+    expect(result.body.data.catalog.length).toBe(2);
+  });
+
+  it('not Get all catalog if invalid username', async () => {
+    const result = await supertest(app).get('/catalog/invalid');
+
+    console.log(result.body);
+
+    expect(result.status).toBe(404);
+    expect(result.body.errors).toBeDefined();
   });
 });

@@ -6,3 +6,10 @@ export const createCatalogValidation = Joi.object({
   title: Joi.string().max(100).required(),
   desc: Joi.string(),
 });
+
+export const getAllCatalogValidation = Joi.string().max(100).required();
+
+export const getCatalogValidationo = Joi.object({
+  username: Joi.string().max(100).required(),
+  catalogId: Joi.string().max(100).required(),
+});

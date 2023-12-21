@@ -14,4 +14,17 @@ const create = async (req, res, next) => {
   }
 };
 
-export default { create };
+const getAll = async (req, res, next) => {
+  try {
+    const result = await catalogService.getAll(req.params.username);
+    res.status(200).json({
+      data: {
+        ...result,
+      },
+    }).end;
+  } catch (e) {
+    next(e);
+  }
+};
+
+export default { create, getAll };
