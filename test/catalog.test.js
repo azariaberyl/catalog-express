@@ -1,7 +1,8 @@
 import supertest from 'supertest';
 import { app } from '../src/application/web';
-import { createTestCatalog, createTestUser, deleteTestCatalog, deleteTestUser } from './test-utils';
+import { createTestCatalog, createTestUser, deleteTestCatalog, deleteTestUser, getAllTestCatalog } from './test-utils';
 import { logger } from '../src/application/logging';
+import { v4 } from 'uuid';
 
 describe('POST /catalog/create', () => {
   beforeEach(async () => {
@@ -53,31 +54,63 @@ describe('POST /catalog/create', () => {
   });
 });
 
-describe.only('GET /catalog/:username', () => {
+describe('GET /catalog/:username', () => {
+  describe('Catalogs exist', () => {
+    beforeEach(async () => {
+      await createTestUser();
+      await createTestCatalog('1');
+      await createTestCatalog('2');
+    });
+    afterEach(async () => {
+      await deleteTestCatalog();
+      await deleteTestUser();
+    });
+
+    it('Get all  catalog', async () => {
+      const result = await supertest(app).get('/catalog/test');
+
+      expect(result.status).toBe(200);
+      expect(result.body.data.catalog).toBeDefined();
+      expect(result.body.data.catalog.length).toBe(2);
+    });
+
+    it('not Get all catalog if invalid username', async () => {
+      const result = await supertest(app).get('/catalog/invalid');
+
+      expect(result.status).toBe(404);
+      expect(result.body.errors).toBeDefined();
+    });
+  });
+  it('return empty array if empty', async () => {
+    await createTestUser();
+    const result = await supertest(app).get('/catalog/test');
+
+    expect(result.body.data.catalog.length).toBe(0);
+
+    await deleteTestUser();
+  });
+});
+
+describe('GET /catalog/:username/:id', () => {
   beforeEach(async () => {
     await createTestUser();
-    await createTestCatalog('1');
-    await createTestCatalog('2');
+    await createTestCatalog();
   });
   afterEach(async () => {
     await deleteTestCatalog();
     await deleteTestUser();
   });
 
-  it('Get all  catalog', async () => {
-    const result = await supertest(app).get('/catalog/test');
+  it('get specific catalog', async () => {
+    const catalogs = await getAllTestCatalog();
+    const result = await supertest(app).get(`/catalog/test/${catalogs[0].id}`);
 
-    expect(result.status).toBe(200);
-    expect(result.body.data.catalog).toBeDefined();
-    expect(result.body.data.catalog.length).toBe(2);
+    expect(result.body.data).toEqual({
+      ...catalogs[0],
+    });
   });
-
-  it('not Get all catalog if invalid username', async () => {
-    const result = await supertest(app).get('/catalog/invalid');
-
+  it('not get catalog if id or username wrong', async () => {
+    const result = await supertest(app).get('/catalog/wrong/wrong');
     console.log(result.body);
-
-    expect(result.status).toBe(404);
-    expect(result.body.errors).toBeDefined();
   });
 });

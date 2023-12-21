@@ -9,7 +9,7 @@ export const createCatalogValidation = Joi.object({
 
 export const getAllCatalogValidation = Joi.string().max(100).required();
 
-export const getCatalogValidationo = Joi.object({
+export const getCatalogValidation = Joi.object({
   username: Joi.string().max(100).required(),
   catalogId: Joi.string().max(100).required(),
 });

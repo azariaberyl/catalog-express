@@ -1,6 +1,10 @@
 import { v4 } from 'uuid';
 import { prismaClient } from '../application/database';
-import { createCatalogValidation, getAllCatalogValidation } from '../validation/catalog-validation';
+import {
+  createCatalogValidation,
+  getAllCatalogValidation,
+  getCatalogValidation,
+} from '../validation/catalog-validation';
 import { validation } from '../validation/validate';
 import ResponseError from '../error/response-error';
 
@@ -24,7 +28,7 @@ const create = async (request) => {
 };
 
 const getAll = async (request) => {
-  const result = await validation(getAllCatalogValidation, request);
+  const result = validation(getAllCatalogValidation, request);
   const catalogs = await prismaClient.user.findUnique({
     where: {
       username: result,
@@ -41,4 +45,18 @@ const getAll = async (request) => {
   return catalogs;
 };
 
-export default { create, getAll };
+const get = async (request) => {
+  const result = validation(getCatalogValidation, request);
+  const catalog = await prismaClient.catalog.findFirst({
+    where: {
+      AND: [{ user_id: result.username }, { id: result.catalogId }],
+    },
+  });
+
+  if (!catalog) {
+    throw new ResponseError(404, `Catalog is not found`);
+  }
+  return catalog;
+};
+
+export default { create, getAll, get };

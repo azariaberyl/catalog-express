@@ -27,4 +27,24 @@ const getAll = async (req, res, next) => {
   }
 };
 
-export default { create, getAll };
+const get = async (req, res, next) => {
+  try {
+    const body = {
+      username: req.params.username,
+      catalogId: req.params.id,
+    };
+    const result = await catalogService.get(body);
+    res
+      .status(200)
+      .json({
+        data: {
+          ...result,
+        },
+      })
+      .end();
+  } catch (e) {
+    next(e);
+  }
+};
+
+export default { create, getAll, get };

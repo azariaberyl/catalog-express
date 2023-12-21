@@ -43,4 +43,14 @@ const deleteTestCatalog = async () => {
   });
 };
 
-export { deleteTestUser, createTestUser, createTestCatalog, deleteTestCatalog };
+const getAllTestCatalog = async () => {
+  return prismaClient.catalog.findMany({
+    where: {
+      title: {
+        startsWith: 'test',
+      },
+    },
+  });
+};
+
+export { deleteTestUser, createTestUser, createTestCatalog, deleteTestCatalog, getAllTestCatalog };
