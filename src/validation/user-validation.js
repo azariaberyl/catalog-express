@@ -18,3 +18,8 @@ export const updateUserValidation = Joi.object({
   username: Joi.string().max(100).required(),
   name: Joi.string().max(100).optional(),
 });
+
+export const getUserValidation = Joi.object({
+  email: Joi.string().max(100).email().required(),
+  username: Joi.string().max(100).required(),
+});

@@ -114,7 +114,7 @@ describe('POST users/login', () => {
   });
 });
 
-describe('PATCH users/current', () => {
+describe('PATCH /users/current', () => {
   beforeEach(async () => {
     await createTestUser();
   });
@@ -170,5 +170,38 @@ describe('PATCH users/current', () => {
 
     expect(result.status).toBe(401);
     expect(result.body.errors).toBe('Unauthorized, Please login again');
+  });
+});
+
+// TODO: Create logout test
+describe('DELETE /users/current', () => {
+  beforeEach(async () => {
+    await createTestUser();
+  });
+
+  afterEach(async () => {
+    await deleteTestUser();
+  });
+
+  it('delete user if token valid', async () => {
+    const result = await supertest(app).delete('/users/current').set('Authorization', 'test');
+
+    expect(result.status).toBe(200);
+    const user = await prismaClient.user.findUnique({
+      where: {
+        username: 'test',
+      },
+      select: {
+        token: true,
+      },
+    });
+    expect(user.token).toBe(null);
+  });
+
+  it('error if no token', async () => {
+    const result = await supertest(app).delete('/users/current');
+
+    expect(result.status).toBe(401);
+    expect(result.body.errors).toBe('Unauthorized');
   });
 });
