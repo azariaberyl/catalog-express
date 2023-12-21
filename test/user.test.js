@@ -141,7 +141,6 @@ describe('PATCH /users/current', () => {
   it('not update user if no data is sent', async () => {
     const result = await supertest(app).patch('/users/current').set('Authorization', 'test');
 
-    console.log(result.body);
     expect(result.status).toBe(200);
     const user = await prismaClient.user.findUnique({
       where: {
@@ -173,7 +172,6 @@ describe('PATCH /users/current', () => {
   });
 });
 
-// TODO: Create logout test
 describe('DELETE /users/current', () => {
   beforeEach(async () => {
     await createTestUser();

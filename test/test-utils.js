@@ -21,4 +21,23 @@ const deleteTestUser = async () => {
   });
 };
 
-export { deleteTestUser, createTestUser };
+const createTestCatalog = async () => {
+  await prismaClient.catalog.create({
+    data: {
+      title: 'test',
+      desc: 'test',
+      id: 'test',
+      user_id: 'test',
+    },
+  });
+};
+
+const deleteTestCatalog = async () => {
+  await prismaClient.catalog.deleteMany({
+    where: {
+      title: 'test',
+    },
+  });
+};
+
+export { deleteTestUser, createTestUser, createTestCatalog, deleteTestCatalog };
