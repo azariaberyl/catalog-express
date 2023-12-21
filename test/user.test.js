@@ -203,3 +203,27 @@ describe('DELETE /users/current', () => {
     expect(result.body.errors).toBe('Unauthorized');
   });
 });
+
+describe.only('GET /users/current', () => {
+  beforeEach(async () => {
+    await createTestUser();
+  });
+
+  afterEach(async () => {
+    await deleteTestUser();
+  });
+
+  it('get user', async () => {
+    const result = await supertest(app).get('/users/current').set('Authorization', 'test');
+
+    expect(result.status).toBe(200);
+    expect(result.body.data).toEqual({ username: 'test', name: 'test', email: 'test@test.com' });
+  });
+
+  it('not get user if no token', async () => {
+    const result = await supertest(app).get('/users/current');
+
+    expect(result.status).toBe(401);
+    expect(result.body.errors).toBeDefined();
+  });
+});

@@ -60,6 +60,7 @@
   {
     "data": {
       "name": "Full Name",
+      "username": "username"
       "email": "user@example.com"
     }
   }

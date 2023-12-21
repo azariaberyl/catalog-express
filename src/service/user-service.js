@@ -9,7 +9,6 @@ import {
   updateUserValidation,
 } from '../validation/user-validation.js';
 import { v4 as uuid } from 'uuid';
-import { logger } from '../application/logging.js';
 
 const register = async (request) => {
   const user = validation(registerUserValidation, request);
@@ -114,6 +113,25 @@ const update = async (request) => {
   });
 };
 
+const get = async (request) => {
+  const result = validation(getUserValidation, request);
+  const user = await prismaClient.user.findUnique({
+    where: {
+      username: result.username,
+    },
+    select: {
+      username: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  if (!user) {
+    throw new ResponseError(404, 'User not found');
+  }
+  return user;
+};
+
 const logout = async (request) => {
   const result = validation(getUserValidation, request);
   const user = await prismaClient.user.findUnique({
@@ -143,4 +161,5 @@ export default {
   login,
   update,
   logout,
+  get,
 };
