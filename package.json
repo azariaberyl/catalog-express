@@ -5,7 +5,9 @@
   "main": "/src/main.js",
   "type": "module",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test-user": "jest user.test.js",
+    "test-catalog": "jest catalog.test.js"
   },
   "jest": {
     "transform": {

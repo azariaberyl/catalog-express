@@ -60,6 +60,7 @@
   {
     "data": {
       "name": "Full Name",
+      "username": "username"
       "email": "user@example.com"
     }
   }
@@ -87,8 +88,7 @@
   ```json
   {
     "data": {
-      "name": "New Full Name",
-      "password": "updated_secure_password"
+      "name": "New Full Name"
     }
   }
   ```
