@@ -204,7 +204,7 @@ describe('DELETE /users/current', () => {
   });
 });
 
-describe.only('GET /users/current', () => {
+describe('GET /users/current', () => {
   beforeEach(async () => {
     await createTestUser();
   });

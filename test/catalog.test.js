@@ -1,8 +1,7 @@
 import supertest from 'supertest';
 import { app } from '../src/application/web';
 import { createTestCatalog, createTestUser, deleteTestCatalog, deleteTestUser, getAllTestCatalog } from './test-utils';
-import { logger } from '../src/application/logging';
-import { v4 } from 'uuid';
+import { prismaClient } from '../src/application/database';
 
 describe('POST /catalog/create', () => {
   beforeEach(async () => {
@@ -111,6 +110,95 @@ describe('GET /catalog/:username/:id', () => {
   });
   it('not get catalog if id or username wrong', async () => {
     const result = await supertest(app).get('/catalog/wrong/wrong');
-    console.log(result.body);
+  });
+});
+
+describe('PUT /catalog/update/:id', () => {
+  beforeEach(async () => {
+    await createTestUser();
+    await createTestCatalog();
+  });
+  afterEach(async () => {
+    await deleteTestCatalog();
+    await deleteTestUser();
+  });
+
+  it('update catalog', async () => {
+    const catalogId = (await getAllTestCatalog())[0].id;
+    const result = await supertest(app).put(`/catalog/update/${catalogId}`).set('Authorization', 'test').send({
+      title: 'test1',
+      desc: 'new Desc',
+    });
+    expect(result.status).toBe(200);
+    expect(result.body.data).toEqual({
+      id: catalogId,
+      user_id: 'test',
+      title: 'test1',
+      desc: 'new Desc',
+    });
+  });
+
+  it('not update catalog if id is wrong', async () => {
+    const result = await supertest(app).put(`/catalog/update/halodek`).set('Authorization', 'test').send({
+      title: 'test1',
+      desc: 'new Desc',
+    });
+
+    expect(result.status).toBe(404);
+    expect(result.body.errors).toBeDefined();
+    expect(result.body.errors).toBe('Catalog is not found');
+  });
+
+  it('update if only 1 data is sent', async () => {
+    const catalogId = (await getAllTestCatalog())[0].id;
+    const result = await supertest(app).put(`/catalog/update/${catalogId}`).set('Authorization', 'test').send({
+      title: 'test1',
+    });
+
+    expect(result.status).toBe(200);
+  });
+});
+
+describe.only('DELETE /catalog/update/:id', () => {
+  beforeEach(async () => {
+    await createTestUser();
+    await createTestCatalog();
+  });
+  afterEach(async () => {
+    await deleteTestUser();
+  });
+  it('delete catalog', async () => {
+    const catalogId = (await getAllTestCatalog())[0].id;
+    const result = await supertest(app).delete(`/catalog/delete/${catalogId}`).set('Authorization', 'test');
+
+    const catalogsCount = await prismaClient.catalog.count({
+      where: {
+        id: catalogId,
+      },
+    });
+    expect(result.status).toBe(200);
+    expect(result.body.data).toEqual({
+      id: catalogId,
+      user_id: 'test',
+      title: 'test',
+      desc: 'test ',
+    });
+    expect(catalogsCount).toBe(0);
+  });
+  it('error if no token for deletion', async () => {
+    const catalogId = (await getAllTestCatalog())[0].id;
+    const result = await supertest(app).delete(`/catalog/delete/${catalogId}`);
+
+    await deleteTestCatalog();
+    expect(result.status).toBe(401);
+    expect(result.body.errors).toBeDefined();
+  });
+
+  it('error if id not found', async () => {
+    const result = await supertest(app).delete(`/catalog/delete/test`).set('Authorization', 'test');
+
+    await deleteTestCatalog();
+    expect(result.status).toBe(404);
+    expect(result.body.errors).toBeDefined();
   });
 });

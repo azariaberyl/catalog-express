@@ -2,8 +2,10 @@ import { v4 } from 'uuid';
 import { prismaClient } from '../application/database';
 import {
   createCatalogValidation,
+  deleteCatalogValidation,
   getAllCatalogValidation,
   getCatalogValidation,
+  updateCatalogValidation,
 } from '../validation/catalog-validation';
 import { validation } from '../validation/validate';
 import ResponseError from '../error/response-error';
@@ -59,4 +61,64 @@ const get = async (request) => {
   return catalog;
 };
 
-export default { create, getAll, get };
+const update = async (request) => {
+  const result = validation(updateCatalogValidation, request);
+  const data = {};
+
+  const user = await prismaClient.catalog.findFirst({
+    where: {
+      user_id: result.username,
+      id: result.catalogId,
+    },
+    select: {
+      id: true,
+    },
+  });
+  if (!user) {
+    throw new ResponseError(404, 'Catalog is not found');
+  }
+
+  if (result.title) {
+    data.title = result.title;
+  }
+
+  if (result.desc) {
+    data.desc = result.desc;
+  }
+
+  const updated = await prismaClient.catalog.update({
+    data: {
+      title: result.title,
+      desc: result.desc,
+    },
+    where: {
+      id: user.id,
+    },
+  });
+  return updated;
+};
+
+const del = async (request) => {
+  const result = validation(deleteCatalogValidation, request);
+  const catalogCount = await prismaClient.catalog.count({
+    where: {
+      user_id: result.username,
+      id: result.catalogId,
+    },
+  });
+
+  if (catalogCount !== 1) {
+    throw new ResponseError(404, 'Catalog already deleted');
+  }
+
+  const catalog = await prismaClient.catalog.delete({
+    where: {
+      user_id: result.username,
+      id: result.catalogId,
+    },
+  });
+
+  return catalog;
+};
+
+export default { create, getAll, get, update, del };

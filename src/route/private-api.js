@@ -9,6 +9,11 @@ privateApi.use(authMiddleware);
 privateApi.get('/users/current', userController.get);
 privateApi.patch('/users/current', userController.update);
 privateApi.delete('/users/current', userController.logout);
+
+//Catalog
+
 privateApi.post('/catalog/create', catalogController.create);
+privateApi.put('/catalog/update/:id', catalogController.update);
+privateApi.delete('/catalog/delete/:id', catalogController.del);
 
 export default privateApi;
