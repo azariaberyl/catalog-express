@@ -22,11 +22,12 @@ model User {
 }
 
 model Catalog {
-  id      String @id @db.VarChar(100)
-  user_id String @db.VarChar(100)
-  title   String @db.VarChar(100)
-  desc    String @db.Text
-  user    User   @relation(fields: [user_id], references: [username])
+  id        String  @id @db.VarChar(100)
+  user_id   String  @db.VarChar(100)
+  title     String  @db.VarChar(100)
+  desc      String? @db.Text
+  imagePath String? @db.VarChar(100)
+  user      User    @relation(fields: [user_id], references: [username])
 
   @@map("catalogs")
 }

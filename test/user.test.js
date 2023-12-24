@@ -151,14 +151,17 @@ describe('PATCH /users/current', () => {
     expect(await compare('test', user.password)).toBe(true);
   });
 
-  it('not update user if no token', async () => {
-    const result = await supertest(app).patch('/users/current').send({
-      name: 'New Full Name', // Optional
-      password: 'new_secure_password', // Optional
-    });
+  it('not update user if token invalid', async () => {
+    const result = await supertest(app)
+      .patch('/users/current')
+      .send({
+        name: 'New Full Name', // Optional
+        password: 'new_secure_password', // Optional
+      })
+      .set('Authorization', 'invalid');
 
     expect(result.status).toBe(401);
-    expect(result.body.errors).toBe('Unauthorized');
+    expect(result.body.errors).toBe('Unauthorized, Please login again');
   });
 
   it('not update user if token invalid', async () => {
@@ -196,15 +199,15 @@ describe('DELETE /users/current', () => {
     expect(user.token).toBe(null);
   });
 
-  it('error if no token', async () => {
-    const result = await supertest(app).delete('/users/current');
+  it('error if token invalid', async () => {
+    const result = await supertest(app).delete('/users/current').set('Authorization', 'invalid');
 
     expect(result.status).toBe(401);
-    expect(result.body.errors).toBe('Unauthorized');
+    expect(result.body.errors).toBe('Unauthorized, Please login again');
   });
 });
 
-describe.only('GET /users/current', () => {
+describe('GET /users/current', () => {
   beforeEach(async () => {
     await createTestUser();
   });
@@ -220,8 +223,8 @@ describe.only('GET /users/current', () => {
     expect(result.body.data).toEqual({ username: 'test', name: 'test', email: 'test@test.com' });
   });
 
-  it('not get user if no token', async () => {
-    const result = await supertest(app).get('/users/current');
+  it('not get user if token invalid', async () => {
+    const result = await supertest(app).get('/users/current').set('Authorization', 'invalid');
 
     expect(result.status).toBe(401);
     expect(result.body.errors).toBeDefined();

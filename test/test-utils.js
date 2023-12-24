@@ -1,33 +1,36 @@
 import { prismaClient } from '../src/application/database';
 import bcrypt from 'bcrypt';
 
-const createTestUser = async () => {
+const createTestUser = async (username = '') => {
   await prismaClient.user.create({
     data: {
-      username: 'test',
-      email: 'test@test.com',
+      username: `test`,
+      email: `test${username}@test.com`,
       password: await bcrypt.hash('test', 10),
       name: 'test',
-      token: 'test',
+      token: `test`,
     },
   });
 };
 
 const deleteTestUser = async () => {
-  await prismaClient.user.delete({
+  await prismaClient.user.deleteMany({
     where: {
-      username: 'test',
+      username: {
+        startsWith: 'test',
+      },
     },
   });
 };
 
-const createTestCatalog = async () => {
+const createTestCatalog = async (title = '', desc = '') => {
+  const id = crypto.randomUUID();
   await prismaClient.catalog.create({
     data: {
-      title: 'test',
-      desc: 'test',
-      id: 'test',
-      user_id: 'test',
+      title: 'test' + title,
+      desc: 'test ' + desc,
+      id,
+      user_id: `test`,
     },
   });
 };
@@ -35,9 +38,21 @@ const createTestCatalog = async () => {
 const deleteTestCatalog = async () => {
   await prismaClient.catalog.deleteMany({
     where: {
-      title: 'test',
+      title: {
+        startsWith: 'test',
+      },
     },
   });
 };
 
-export { deleteTestUser, createTestUser, createTestCatalog, deleteTestCatalog };
+const getAllTestCatalog = async () => {
+  return prismaClient.catalog.findMany({
+    where: {
+      title: {
+        startsWith: 'test',
+      },
+    },
+  });
+};
+
+export { deleteTestUser, createTestUser, createTestCatalog, deleteTestCatalog, getAllTestCatalog };
