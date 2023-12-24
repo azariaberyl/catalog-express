@@ -1,22 +1,24 @@
 import { prismaClient } from '../src/application/database';
 import bcrypt from 'bcrypt';
 
-const createTestUser = async () => {
+const createTestUser = async (username = '') => {
   await prismaClient.user.create({
     data: {
-      username: 'test',
-      email: 'test@test.com',
+      username: `test`,
+      email: `test${username}@test.com`,
       password: await bcrypt.hash('test', 10),
       name: 'test',
-      token: 'test',
+      token: `test`,
     },
   });
 };
 
 const deleteTestUser = async () => {
-  await prismaClient.user.delete({
+  await prismaClient.user.deleteMany({
     where: {
-      username: 'test',
+      username: {
+        startsWith: 'test',
+      },
     },
   });
 };
@@ -28,7 +30,7 @@ const createTestCatalog = async (title = '', desc = '') => {
       title: 'test' + title,
       desc: 'test ' + desc,
       id,
-      user_id: 'test',
+      user_id: `test`,
     },
   });
 };

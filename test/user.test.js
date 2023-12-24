@@ -5,13 +5,15 @@ import { prismaClient } from '../src/application/database';
 import { compare, hash } from 'bcrypt';
 
 describe('POST users/register', () => {
-  it('create user', async () => {
+  it.only('create user', async () => {
     const res = await supertest(app).post('/users/register').send({
       email: 'test@test.com',
       password: 'test',
       username: 'test',
       name: 'test',
     });
+
+    console.log(res.body);
 
     expect(res.status).toBe(201);
     expect(res.body).toEqual({

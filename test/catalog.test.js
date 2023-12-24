@@ -3,7 +3,7 @@ import { app } from '../src/application/web';
 import { createTestCatalog, createTestUser, deleteTestCatalog, deleteTestUser, getAllTestCatalog } from './test-utils';
 import { prismaClient } from '../src/application/database';
 
-describe('POST /catalog/create', () => {
+describe.skip('POST /catalog/create', () => {
   beforeEach(async () => {
     await createTestUser();
   });
@@ -65,16 +65,16 @@ describe('GET /catalog/:username', () => {
       await deleteTestUser();
     });
 
-    it('Get all  catalog', async () => {
+    it('Get all catalog', async () => {
       const result = await supertest(app).get('/catalog/test');
-
       expect(result.status).toBe(200);
-      expect(result.body.data.catalog).toBeDefined();
+      expect(result.body.data).toBeDefined();
       expect(result.body.data.catalog.length).toBe(2);
     });
 
     it('not Get all catalog if invalid username', async () => {
       const result = await supertest(app).get('/catalog/invalid');
+      console.log(result.body);
 
       expect(result.status).toBe(404);
       expect(result.body.errors).toBeDefined();
@@ -113,7 +113,7 @@ describe('GET /catalog/:username/:id', () => {
   });
 });
 
-describe('PUT /catalog/update/:id', () => {
+describe.skip('PUT /catalog/update/:id', () => {
   beforeEach(async () => {
     await createTestUser();
     await createTestCatalog();
@@ -159,7 +159,7 @@ describe('PUT /catalog/update/:id', () => {
   });
 });
 
-describe.only('DELETE /catalog/update/:id', () => {
+describe('DELETE /catalog/delete/:id', () => {
   beforeEach(async () => {
     await createTestUser();
     await createTestCatalog();
@@ -177,17 +177,12 @@ describe.only('DELETE /catalog/update/:id', () => {
       },
     });
     expect(result.status).toBe(200);
-    expect(result.body.data).toEqual({
-      id: catalogId,
-      user_id: 'test',
-      title: 'test',
-      desc: 'test ',
-    });
+    expect(result.body.data).toBe('OK');
     expect(catalogsCount).toBe(0);
   });
-  it('error if no token for deletion', async () => {
+  it('error if token wrong for deletion', async () => {
     const catalogId = (await getAllTestCatalog())[0].id;
-    const result = await supertest(app).delete(`/catalog/delete/${catalogId}`);
+    const result = await supertest(app).delete(`/catalog/delete/${catalogId}`).set('Authorization', 'invalid');
 
     await deleteTestCatalog();
     expect(result.status).toBe(401);

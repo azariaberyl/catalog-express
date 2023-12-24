@@ -1,14 +1,15 @@
 import { v4 } from 'uuid';
-import { prismaClient } from '../application/database';
+import { prismaClient } from '../application/database.js';
 import {
   createCatalogValidation,
   deleteCatalogValidation,
   getAllCatalogValidation,
   getCatalogValidation,
   updateCatalogValidation,
-} from '../validation/catalog-validation';
-import { validation } from '../validation/validate';
-import ResponseError from '../error/response-error';
+} from '../validation/catalog-validation.js';
+import { validation } from '../validation/validate.js';
+import ResponseError from '../error/response-error.js';
+import fs from 'fs';
 
 const create = async (request) => {
   const result = validation(createCatalogValidation, request);
@@ -20,9 +21,15 @@ const create = async (request) => {
       desc: result.desc,
       id,
       user_id: result.username,
+      imagePath: result.image,
     },
     include: {
-      user: true,
+      user: {
+        select: {
+          username: true,
+          name: true,
+        },
+      },
     },
   });
 
@@ -35,7 +42,9 @@ const getAll = async (request) => {
     where: {
       username: result,
     },
-    include: {
+    select: {
+      username: true,
+      name: true,
       catalog: true,
     },
   });
@@ -51,7 +60,8 @@ const get = async (request) => {
   const result = validation(getCatalogValidation, request);
   const catalog = await prismaClient.catalog.findFirst({
     where: {
-      AND: [{ user_id: result.username }, { id: result.catalogId }],
+      user_id: result.username,
+      id: result.catalogId,
     },
   });
 
@@ -65,16 +75,17 @@ const update = async (request) => {
   const result = validation(updateCatalogValidation, request);
   const data = {};
 
-  const user = await prismaClient.catalog.findFirst({
+  const catalog = await prismaClient.catalog.findFirst({
     where: {
       user_id: result.username,
       id: result.catalogId,
     },
     select: {
       id: true,
+      imagePath: true,
     },
   });
-  if (!user) {
+  if (!catalog) {
     throw new ResponseError(404, 'Catalog is not found');
   }
 
@@ -86,13 +97,18 @@ const update = async (request) => {
     data.desc = result.desc;
   }
 
+  if (result.image) {
+    fs.unlinkSync(catalog.imagePath);
+  }
+
   const updated = await prismaClient.catalog.update({
     data: {
       title: result.title,
       desc: result.desc,
+      imagePath: result.image,
     },
     where: {
-      id: user.id,
+      id: catalog.id,
     },
   });
   return updated;

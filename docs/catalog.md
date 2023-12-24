@@ -18,7 +18,7 @@
       "id": "Catalog id",
       "title": "New Catalog",
       "description": "This is a new catalog",
-      "image": "image path"
+      "imagePath": "image/path.ext"
     }
   }
   ```
@@ -37,9 +37,8 @@
 - **Request:** multipart/form-data
   ```json
   {
-    "id": "id",
     "title": "New Catalog",
-    "description": "This is a new catalog"
+    "desc": "This is a new catalog"
   }
   ```
   - File: Image
@@ -49,7 +48,7 @@
     "data": {
       "id": "id",
       "title": "New Catalog",
-      "description": "This is a new catalog",
+      "desc": "This is a new catalog",
       "image": "image path"
     }
   }
@@ -105,9 +104,9 @@
   }
   ```
 
-### 5. Delte Catalog
+### 5. Delete Catalog
 
-- **Endpoint:** `DELETE /catalog/:id`
+- **Endpoint:** `DELETE /catalog/delete/:id`
 - **Headers:**
   - **Authorization:** Bearer authentication_token
 - **Response (Success):**

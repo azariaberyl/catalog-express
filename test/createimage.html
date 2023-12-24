@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <script>
+    function showOpenFilePickerPolyfill(options) {
+      return new Promise((resolve) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = options.multiple;
+        input.accept = options.types
+          .map((type) => type.accept)
+          .flatMap((inst) => Object.keys(inst).flatMap((key) => inst[key]))
+          .join(',');
+
+        input.addEventListener('change', () => {
+          resolve(
+            [...input.files].map((file) => {
+              return {
+                getFile: async () =>
+                  new Promise((resolve) => {
+                    resolve(file);
+                  }),
+              };
+            })
+          );
+        });
+
+        input.click();
+      });
+    }
+
+    if (typeof window.showOpenFilePicker !== 'function') {
+      window.showOpenFilePicker = showOpenFilePickerPolyfill;
+    }
+    const pickerOpts = {
+      types: [
+        {
+          description: 'Images',
+          accept: {
+            'image/*': ['.png', '.gif', '.jpeg', '.jpg'],
+          },
+        },
+      ],
+      excludeAcceptAllOption: true,
+      multiple: false,
+    };
+
+    async function sendData(data) {
+      // Construct a FormData instance
+      const formData = new FormData();
+
+      // Add a text field
+      formData.append('title', 'test');
+      formData.append('desc', 'test1');
+
+      // Add a file
+      const selection = await window.showOpenFilePicker(pickerOpts);
+      if (selection.length > 0) {
+        const file = await selection[0].getFile();
+        formData.append('image', file);
+      }
+
+      try {
+        const response = await fetch('http://localhost:3000/catalog/create', {
+          method: 'POST',
+          // Set the FormData instance as the request body
+          body: formData,
+          headers: {
+            Authorization: 'test1',
+          },
+        });
+        console.log(await response.json());
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  </script>
+  <body>
+    <button onclick="sendData()">Submit</button>
+  </body>
+</html>
