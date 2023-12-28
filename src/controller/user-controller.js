@@ -36,7 +36,7 @@ const update = async (req, res, next) => {
       .status(200)
       .json({
         data: {
-          name: result,
+          ...result,
         },
       })
       .end();

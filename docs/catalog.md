@@ -31,7 +31,7 @@
 
 ### 2. Update Catalog
 
-- **Endpoint:** `PATCH /catalog/update/:id`
+- **Endpoint:** `PUT /catalog/update/:id`
 - **Headers:**
   - **Authorization:** Bearer authentication_token
 - **Request:** multipart/form-data

@@ -1,0 +1,156 @@
+{
+	"info": {
+		"_postman_id": "d67df3a3-80d4-43cd-bf73-ecea1f0ba441",
+		"name": "5. Create Catalog",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18996654"
+	},
+	"item": [
+		{
+			"name": "[Success] Create catalog",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"return created data\", function () {",
+							"    var jsonData = pm.response.json().data;",
+							"    pm.expect(jsonData).to.deep.include({",
+							"        title: 'test',",
+							"        desc: 'test desc'",
+							"    });",
+							"});",
+							"",
+							"pm.test('id, imagePath should exist', () => {",
+							"    const jsonData = pm.response.json().data",
+							"    pm.expect(jsonData.id).to.exist",
+							"    pm.expect(jsonData.imagePath).to.exist",
+							"",
+							"    pm.environment.set(\"catalogId\", jsonData.id)",
+							"    pm.environment.set(\"imagePath\", jsonData.imagePath)",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "title",
+							"value": "test",
+							"type": "text"
+						},
+						{
+							"key": "desc",
+							"value": "test desc",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": "postman-cloud:///1eea230c-50e9-4060-b630-f3a01c549f2e"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:3000/catalog/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"catalog",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[Success] Create catalog without image",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"return created data\", function () {",
+							"    var jsonData = pm.response.json().data;",
+							"    pm.expect(jsonData).to.deep.include({",
+							"        title: 'test',",
+							"        desc: 'test desc'",
+							"    });",
+							"});",
+							"",
+							"pm.test('id, imagePath should exist', () => {",
+							"    const jsonData = pm.response.json().data",
+							"    pm.expect(jsonData.id).to.exist",
+							"    pm.expect(jsonData.imagePath).to.equal(null)",
+							"",
+							"    pm.environment.set(\"catalogIdNoImage\", jsonData.id)",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "title",
+							"value": "test",
+							"type": "text"
+						},
+						{
+							"key": "desc",
+							"value": "test desc",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:3000/catalog/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"catalog",
+						"create"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

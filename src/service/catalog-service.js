@@ -134,6 +134,10 @@ const del = async (request) => {
     },
   });
 
+  if (catalog.imagePath) {
+    fs.unlinkSync(catalog.imagePath);
+  }
+
   return catalog;
 };
 
