@@ -13,7 +13,7 @@ datasource db {
 model User {
   username String    @id @db.VarChar(100)
   email    String    @unique @db.VarChar(100)
-  name     String    @db.VarChar(100)
+  name     String?   @db.VarChar(100)
   password String    @db.VarChar(100)
   token    String?
   catalog  Catalog[]

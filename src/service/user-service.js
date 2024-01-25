@@ -1,4 +1,3 @@
-import { validation } from '../validation/validate.js';
 import bcrypt from 'bcrypt';
 import { prismaClient } from '../application/database.js';
 import ResponseError from '../error/response-error.js';
@@ -8,7 +7,8 @@ import {
   registerUserValidation,
   updateUserValidation,
 } from '../validation/user-validation.js';
-import { v4 as uuid } from 'uuid';
+import { validation } from '../validation/validate.js';
+import jwt from 'jsonwebtoken';
 
 const register = async (request) => {
   const user = validation(registerUserValidation, request);
@@ -65,8 +65,17 @@ const login = async (request) => {
 
   const isPasswordValid = await bcrypt.compare(result.password, user.password);
   if (isPasswordValid) {
-    // TODO: Update token usage
-    const token = uuid();
+    const token = jwt.sign(
+      {
+        id: `${user.username}_${user.email}`,
+      },
+      process.env.API_SECRET,
+      {
+        // expiresIn: 86400, // 24 hours
+        expiresIn: 1000, // 24 hours
+      }
+    );
+
     return prismaClient.user.update({
       where: {
         email: result.email,
