@@ -25,12 +25,16 @@ const register = async (request) => {
     },
   });
 
+  if (userCount > 0 && emailCount > 0) {
+    throw new ResponseError(400, 'Username and email already exist');
+  }
+
   if (userCount > 0) {
-    throw new ResponseError(400, 'Username already exist');
+    throw new ResponseError(400, 'Username already exists');
   }
 
   if (emailCount > 0) {
-    throw new ResponseError(400, 'Email already exist');
+    throw new ResponseError(400, 'Email already exists');
   }
 
   user.password = await bcrypt.hash(user.password, 10);
@@ -71,8 +75,7 @@ const login = async (request) => {
       },
       process.env.API_SECRET,
       {
-        // expiresIn: 86400, // 24 hours
-        expiresIn: 1000, // 24 hours
+        expiresIn: 7 * 86400, // 7 * 24 hours
       }
     );
 
