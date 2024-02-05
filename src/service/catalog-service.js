@@ -11,17 +11,23 @@ import { validation } from '../validation/validate.js';
 import ResponseError from '../error/response-error.js';
 import fs from 'fs';
 
+// TODO: create test
 const create = async (request) => {
+  console.log(request.body);
   const result = validation(createCatalogValidation, request);
   const id = v4();
 
-  const catalog = await prismaClient.catalog.create({
+  const catalog = await prismaClient.catalogContainer.create({
     data: {
       title: result.title,
       desc: result.desc,
       id,
       user_id: result.username,
-      imagePath: result.image,
+      catalogs: {
+        createMany: {
+          data: result.items,
+        },
+      },
     },
     include: {
       user: {

@@ -9,9 +9,15 @@ const create = async (req, res, next) => {
       const { fileTypeFromFile } = await import('file-type');
       const meta = await fileTypeFromFile(req.file.path);
       if (!imageWhitelist.includes(meta.mime)) {
-        return next(new ResponseError(400, 'file is not allowed'));
+        throw new ResponseError(400, 'file is not allowed');
       }
       req.body.image = req.file.path;
+    }
+    // TODO: experimental, remove this later
+    if (req.files) {
+      console.log(req.files, req.files.length);
+      console.log(req.body);
+      throw new ResponseError(400, 'Files exist');
     }
 
     await authFunction(req);
