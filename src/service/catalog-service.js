@@ -29,13 +29,10 @@ const create = async (request) => {
         },
       },
     },
-    include: {
-      user: {
-        select: {
-          username: true,
-          name: true,
-        },
-      },
+    select: {
+      id: true,
+      title: true,
+      desc: true,
     },
   });
 

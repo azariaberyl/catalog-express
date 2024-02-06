@@ -25,7 +25,7 @@ const create = async (req, res, next) => {
           });
           if (!theImg) return item;
 
-          return { ...item, imgPath: theImg.path };
+          return { ...item, imagePath: theImg.path };
         });
     }
 

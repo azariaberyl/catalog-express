@@ -6,10 +6,10 @@ export const createCatalogValidation = Joi.object({
   title: Joi.string().max(100).required(),
   desc: Joi.string().optional(),
   items: Joi.array().items({
-    id: Joi.number().required(),
+    id: Joi.string().required(),
     title: Joi.string().max(100).optional(),
     desc: Joi.string().optional(),
-    imgPath: Joi.string().optional(),
+    imagePath: Joi.string().optional(),
   }),
 });
 
