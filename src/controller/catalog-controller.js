@@ -14,13 +14,11 @@ const create = async (req, res, next) => {
       req.body.image = req.file.path;
     }
 
-    await authFunction(req);
     if (req.body.items) {
       req.body.items = JSON.parse(req.body.items);
       if (req.files.length > 0)
         req.body.items = req.body.items.map((item) => {
           const theImg = req.files.find((file) => {
-            console.log(file.originalname.split('.')[0] == item.id);
             return file.originalname.split('.')[0] == item.id;
           });
           if (!theImg) return item;
@@ -28,6 +26,7 @@ const create = async (req, res, next) => {
           return { ...item, imagePath: theImg.path };
         });
     }
+    await authFunction(req);
 
     const result = await catalogService.create(req.body);
     res
