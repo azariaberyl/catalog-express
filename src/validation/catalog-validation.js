@@ -5,12 +5,14 @@ export const createCatalogValidation = Joi.object({
   username: Joi.string().max(100).required(),
   title: Joi.string().max(100).required(),
   desc: Joi.string().optional(),
-  items: Joi.array().items({
-    id: Joi.string().required(),
-    title: Joi.string().max(100).optional(),
-    desc: Joi.string().optional(),
-    imagePath: Joi.string().optional(),
-  }),
+  items: Joi.array()
+    .optional()
+    .items({
+      id: Joi.string().required(),
+      title: Joi.string().max(100).optional(),
+      desc: Joi.string().optional(),
+      imagePath: Joi.string().optional(),
+    }),
 });
 
 export const getAllCatalogValidation = Joi.string().max(100).required();

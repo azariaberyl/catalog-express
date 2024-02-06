@@ -13,9 +13,31 @@ import fs from 'fs';
 
 // TODO: create test
 const create = async (request) => {
-  console.log(request.body);
   const result = validation(createCatalogValidation, request);
   const id = v4();
+
+  if (result.items) {
+    const catalog = await prismaClient.catalogContainer.create({
+      data: {
+        title: result.title,
+        desc: result.desc,
+        id,
+        user_id: result.username,
+        catalogs: {
+          createMany: {
+            data: result.items,
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        desc: true,
+      },
+    });
+
+    return catalog;
+  }
 
   const catalog = await prismaClient.catalogContainer.create({
     data: {
@@ -23,11 +45,6 @@ const create = async (request) => {
       desc: result.desc,
       id,
       user_id: result.username,
-      catalogs: {
-        createMany: {
-          data: result.items,
-        },
-      },
     },
     select: {
       id: true,
@@ -46,9 +63,13 @@ const getAll = async (request) => {
       username: result,
     },
     select: {
-      username: true,
-      name: true,
-      catalog: true,
+      Catalog: {
+        select: {
+          id: true,
+          title: true,
+          desc: true,
+        },
+      },
     },
   });
 

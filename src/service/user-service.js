@@ -71,7 +71,7 @@ const login = async (request) => {
   if (isPasswordValid) {
     const token = jwt.sign(
       {
-        id: `${user.username}_${user.email}`,
+        id: user.username,
       },
       process.env.API_SECRET,
       {
