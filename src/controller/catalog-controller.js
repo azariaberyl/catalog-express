@@ -13,14 +13,22 @@ const create = async (req, res, next) => {
       }
       req.body.image = req.file.path;
     }
-    // TODO: experimental, remove this later
-    if (req.files) {
-      console.log(req.files, req.files.length);
-      console.log(req.body);
-      throw new ResponseError(400, 'Files exist');
-    }
 
     await authFunction(req);
+    if (req.body.items) {
+      req.body.items = JSON.parse(req.body.items);
+      if (req.files.length > 0)
+        req.body.items = req.body.items.map((item) => {
+          const theImg = req.files.find((file) => {
+            console.log(file.originalname.split('.')[0] == item.id);
+            return file.originalname.split('.')[0] == item.id;
+          });
+          if (!theImg) return item;
+
+          return { ...item, imgPath: theImg.path };
+        });
+    }
+
     const result = await catalogService.create(req.body);
     res
       .status(201)

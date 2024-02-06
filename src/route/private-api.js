@@ -1,11 +1,9 @@
 import express from 'express';
-import userController from '../controller/user-controller.js';
-import authMiddleware from '../middleware/auth-middleware.js';
-import catalogController from '../controller/catalog-controller.js';
 import multer from 'multer';
-import path from 'path';
-import { v4 } from 'uuid';
+import catalogController from '../controller/catalog-controller.js';
+import userController from '../controller/user-controller.js';
 import ResponseError from '../error/response-error.js';
+import authMiddleware from '../middleware/auth-middleware.js';
 import { imageWhitelist } from '../utils/global.js';
 
 var storage = multer.diskStorage({
@@ -13,7 +11,7 @@ var storage = multer.diskStorage({
     cb(null, 'images/');
   },
   filename: function (req, file, cb) {
-    cb(null, v4() + path.extname(file.originalname)); //Appending extension
+    cb(null, file.originalname); 
   },
 });
 
