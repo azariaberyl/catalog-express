@@ -140,7 +140,7 @@ const update = async (request) => {
 
 const del = async (request) => {
   const result = validation(deleteCatalogValidation, request);
-  const catalogCount = await prismaClient.catalog.count({
+  const catalogCount = await prismaClient.catalogContainer.count({
     where: {
       user_id: result.username,
       id: result.catalogId,
@@ -148,10 +148,17 @@ const del = async (request) => {
   });
 
   if (catalogCount !== 1) {
-    throw new ResponseError(404, 'Catalog already deleted');
+    throw new ResponseError(404, 'Catalog is not found');
   }
 
-  const catalog = await prismaClient.catalog.delete({
+  // TODO: delete the corresponding image of each item
+  const catalogItem = await prismaClient.catalog.deleteMany({
+    where: {
+      container_id: result.catalogId,
+    },
+  });
+
+  const catalog = await prismaClient.catalogContainer.delete({
     where: {
       user_id: result.username,
       id: result.catalogId,
@@ -162,7 +169,7 @@ const del = async (request) => {
     fs.unlinkSync(catalog.imagePath);
   }
 
-  return catalog;
+  return [catalog, catalogItem];
 };
 
 export default { create, getAll, get, update, del };

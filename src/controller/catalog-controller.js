@@ -107,7 +107,7 @@ const del = async (req, res, next) => {
     res
       .status(200)
       .json({
-        data: 'OK',
+        data: result,
       })
       .end();
   } catch (e) {
