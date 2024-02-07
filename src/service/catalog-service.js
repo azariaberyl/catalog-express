@@ -14,7 +14,7 @@ import fs from 'fs';
 // TODO: create test
 const create = async (request) => {
   const result = validation(createCatalogValidation, request);
-  const id = v4();
+  const id = `${v4()}-${+new Date()}`;
 
   if (result.items) {
     const catalog = await prismaClient.catalogContainer.create({

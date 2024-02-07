@@ -8,6 +8,7 @@ publicApi.use('/images', express.static('images')); // Prefix path
 
 publicApi.post('/users/register', userController.register);
 publicApi.post('/users/login', userController.login);
+// TODO: move this to private api
 publicApi.get('/catalog/:username', catalogController.getAll);
 publicApi.get('/catalog/:username/:id', catalogController.get);
 
