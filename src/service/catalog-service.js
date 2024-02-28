@@ -82,10 +82,13 @@ const getAll = async (request) => {
 
 const get = async (request) => {
   const result = validation(getCatalogValidation, request);
-  const catalog = await prismaClient.catalog.findFirst({
+  const catalog = await prismaClient.catalogContainer.findFirst({
     where: {
       user_id: result.username,
       id: result.catalogId,
+    },
+    include: {
+      catalogs: true,
     },
   });
 
