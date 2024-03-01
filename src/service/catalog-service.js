@@ -101,15 +101,15 @@ const get = async (request) => {
 const update = async (request) => {
   const result = validation(updateCatalogValidation, request);
   const data = {};
+  const catalogs = [];
 
-  const catalog = await prismaClient.catalog.findFirst({
+  const catalog = await prismaClient.catalogContainer.findFirst({
     where: {
       user_id: result.username,
       id: result.catalogId,
     },
     select: {
       id: true,
-      imagePath: true,
     },
   });
   if (!catalog) {
@@ -124,21 +124,40 @@ const update = async (request) => {
     data.desc = result.desc;
   }
 
-  if (result.image) {
-    fs.unlinkSync(catalog.imagePath);
+  if (result.items) {
+    catalogs.push(...result.items);
   }
 
-  const updated = await prismaClient.catalog.update({
-    data: {
-      title: result.title,
-      desc: result.desc,
-      imagePath: result.image,
-    },
+  console.log(catalogs);
+  const updated1 = await prismaClient.$transaction(async (prisma) => {
+    const updatedContainer = await prisma.catalogContainer.update({
+      data,
+      where: {
+        id: catalog.id,
+      },
+    });
+    if (catalogs.length <= 0) return updatedContainer;
+
+    const updatedCatalogs = await Promise.all(
+      catalogs.map((item) =>
+        prisma.catalog.update({
+          where: {
+            id: item.id,
+          },
+          data: item,
+        })
+      )
+    );
+    return [updatedContainer, updatedCatalogs];
+  });
+
+  const updated = await prismaClient.catalogContainer.update({
+    data,
     where: {
       id: catalog.id,
     },
   });
-  return updated;
+  return updated1;
 };
 
 const del = async (request) => {

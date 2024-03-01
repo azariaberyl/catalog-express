@@ -79,11 +79,23 @@ const update = async (req, res, next) => {
       const { fileTypeFromFile } = await import('file-type');
       const meta = await fileTypeFromFile(req.file.path);
       if (!imageWhitelist.includes(meta.mime)) {
-        return next(new ResponseError(400, 'file is not allowed'));
+        throw new ResponseError(400, 'file is not allowed');
       }
       req.body.image = req.file.path;
     }
 
+    if (req.body.items) {
+      req.body.items = JSON.parse(req.body.items);
+      if (req.files.length > 0)
+        req.body.items = req.body.items.map((item) => {
+          const theImg = req.files.find((file) => {
+            return file.originalname.split('.')[0] == item.id;
+          });
+          if (!theImg) return item;
+
+          return { ...item, imagePath: theImg.path };
+        });
+    }
     await authFunction(req);
     req.body.catalogId = req.params.id;
     const result = await catalogService.update(req.body);

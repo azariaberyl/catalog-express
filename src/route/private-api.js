@@ -35,8 +35,9 @@ privateApi.delete('/users/current', userController.logout);
 
 //Catalog
 
+privateApi.get('/catalog/:username', catalogController.getAll);
 privateApi.post('/catalog/create', upload.array('images'), catalogController.create);
-privateApi.put('/catalog/update/:id', upload.single('image'), catalogController.update);
+privateApi.put('/catalog/update/:id', upload.array('images'), catalogController.update);
 privateApi.delete('/catalog/delete/:id', catalogController.del);
 
 export default privateApi;
