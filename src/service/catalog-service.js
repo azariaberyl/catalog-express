@@ -10,6 +10,28 @@ import {
 import { validation } from '../validation/validate.js';
 import ResponseError from '../error/response-error.js';
 import fs from 'fs';
+import multer from 'multer';
+import { imageWhitelist } from '../utils/global.js';
+
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'images/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+
+export var upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (!imageWhitelist.includes(file.mimetype)) {
+      return cb(new ResponseError(400, 'file is not allowed'));
+    }
+
+    cb(null, true);
+  },
+});
 
 // TODO: create test
 const create = async (request) => {
@@ -128,8 +150,7 @@ const update = async (request) => {
     catalogs.push(...result.items);
   }
 
-  console.log(catalogs);
-  const updated1 = await prismaClient.$transaction(async (prisma) => {
+  const updated = await prismaClient.$transaction(async (prisma) => {
     const updatedContainer = await prisma.catalogContainer.update({
       data,
       where: {
@@ -140,24 +161,24 @@ const update = async (request) => {
 
     const updatedCatalogs = await Promise.all(
       catalogs.map((item) =>
-        prisma.catalog.update({
+        prisma.catalog.upsert({
           where: {
             id: item.id,
           },
-          data: item,
+          update: item,
+          create: {
+            catalog_container: {
+              connect: { id: catalog.id },
+            },
+            ...item,
+          },
         })
       )
     );
     return [updatedContainer, updatedCatalogs];
   });
 
-  const updated = await prismaClient.catalogContainer.update({
-    data,
-    where: {
-      id: catalog.id,
-    },
-  });
-  return updated1;
+  return updated;
 };
 
 const del = async (request) => {
