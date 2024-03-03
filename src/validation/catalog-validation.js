@@ -5,6 +5,7 @@ export const createCatalogValidation = Joi.object({
   username: Joi.string().max(100).required(),
   title: Joi.string().max(100).required(),
   desc: Joi.string().optional(),
+  customToken: Joi.string().optional(),
   items: Joi.array()
     .optional()
     .items({
@@ -28,6 +29,7 @@ export const updateCatalogValidation = Joi.object({
   title: Joi.string().max(100).required(),
   catalogId: Joi.string().max(100).required(),
   desc: Joi.string().optional(),
+  customToken: Joi.string().max(50).optional(),
   items: Joi.array()
     .optional()
     .items({
@@ -42,4 +44,10 @@ export const deleteCatalogValidation = Joi.object({
   email: Joi.string().max(100).required(),
   username: Joi.string().max(100).required(),
   catalogId: Joi.string().max(100).required(),
+});
+
+export const checkCodeValidation = Joi.object({
+  email: Joi.string().max(100).required(),
+  username: Joi.string().max(100).required(),
+  // customCode: Joi.string().max(50).pattern(`^(.)+\\(.)+$`, 'Custom Token Pattern').required(),
 });

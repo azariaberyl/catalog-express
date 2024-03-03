@@ -27,7 +27,7 @@ const create = async (req, res, next) => {
         });
     }
     await authFunction(req);
-
+    console.log(req.body);
     const result = await catalogService.create(req.body);
     res
       .status(201)
@@ -127,4 +127,13 @@ const del = async (req, res, next) => {
   }
 };
 
-export default { create, getAll, get, update, del };
+const getCustomCode = async (req, res, next) => {
+  try {
+    const result = await catalogService.getCustomCode(req.body);
+    res.status(200).json({ data: result }).end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export default { create, getAll, get, update, del, getCustomCode };

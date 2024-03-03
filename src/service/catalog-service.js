@@ -1,6 +1,7 @@
 import { v4 } from 'uuid';
 import { prismaClient } from '../application/database.js';
 import {
+  checkCodeValidation,
   createCatalogValidation,
   deleteCatalogValidation,
   getAllCatalogValidation,
@@ -45,6 +46,7 @@ const create = async (request) => {
         desc: result.desc,
         id,
         user_id: result.username,
+        custom_code: result.customToken,
         catalogs: {
           createMany: {
             data: result.items,
@@ -67,6 +69,7 @@ const create = async (request) => {
       desc: result.desc,
       id,
       user_id: result.username,
+      custom_code: result.customToken,
     },
     select: {
       id: true,
@@ -215,4 +218,17 @@ const del = async (request) => {
   return [catalog, catalogItem];
 };
 
-export default { create, getAll, get, update, del };
+const getCustomCode = async (req) => {
+  const result = validation(checkCodeValidation, req);
+  const customCode = await prismaClient.catalogContainer.findMany({
+    where: {
+      custom_code: { startsWith: result.username },
+    },
+    select: { custom_code: true },
+  });
+  if (!customCode) return [];
+
+  return customCode;
+};
+
+export default { create, getAll, get, update, del, getCustomCode };
