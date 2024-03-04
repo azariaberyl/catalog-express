@@ -149,6 +149,10 @@ const update = async (request) => {
     data.desc = result.desc;
   }
 
+  if (result.customToken) {
+    data.custom_code = result.customToken;
+  }
+
   if (result.items) {
     catalogs.push(...result.items);
   }
