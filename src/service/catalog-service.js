@@ -63,6 +63,20 @@ const create = async (request) => {
     return catalog;
   }
 
+  if (result.customToken) {
+    const code = await prismaClient.catalogContainer.findUnique({
+      where: {
+        custom_code: result.customToken,
+      },
+      select: {
+        custom_code: true,
+      },
+    });
+    if (code) {
+      throw new ResponseError(400, 'Custom code is already used. Please check it first :)');
+    }
+  }
+
   const catalog = await prismaClient.catalogContainer.create({
     data: {
       title: result.title,
@@ -139,6 +153,20 @@ const update = async (request) => {
   });
   if (!catalog) {
     throw new ResponseError(404, 'Catalog is not found');
+  }
+
+  if (result.customToken) {
+    const code = await prismaClient.catalogContainer.findUnique({
+      where: {
+        custom_code: result.customToken,
+      },
+      select: {
+        custom_code: true,
+      },
+    });
+    if (code) {
+      throw new ResponseError(400, 'Custom code is already used. Please check it first :)');
+    }
   }
 
   if (result.title) {
@@ -224,13 +252,13 @@ const del = async (request) => {
 
 const getCustomCode = async (req) => {
   const result = validation(checkCodeValidation, req);
+  console.log(result.username);
   const customCode = await prismaClient.catalogContainer.findMany({
     where: {
       custom_code: { startsWith: result.username },
     },
     select: { custom_code: true },
   });
-  if (!customCode) return [];
 
   return customCode;
 };
