@@ -136,4 +136,14 @@ const getCustomCode = async (req, res, next) => {
   }
 };
 
-export default { create, getAll, get, update, del, getCustomCode };
+const search = async (req, res, next) => {
+  try {
+    req.body = req.query.id;
+    const result = await catalogService.search(req.body);
+    res.status(200).json({ data: result }).end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export default { create, getAll, get, update, del, getCustomCode, search };

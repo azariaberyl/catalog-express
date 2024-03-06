@@ -6,6 +6,7 @@ import {
   deleteCatalogValidation,
   getAllCatalogValidation,
   getCatalogValidation,
+  searchValidation,
   updateCatalogValidation,
 } from '../validation/catalog-validation.js';
 import { validation } from '../validation/validate.js';
@@ -247,7 +248,6 @@ const del = async (request) => {
 
 const getCustomCode = async (req) => {
   const result = validation(checkCodeValidation, req);
-  console.log(result.username);
   const customCode = await prismaClient.catalogContainer.findMany({
     where: {
       custom_code: { startsWith: result.username },
@@ -258,4 +258,31 @@ const getCustomCode = async (req) => {
   return customCode;
 };
 
-export default { create, getAll, get, update, del, getCustomCode };
+const search = async (req) => {
+  const result = validation(searchValidation, req);
+  const catalogId = await prismaClient.catalogContainer.findMany({
+    where: {
+      OR: [
+        {
+          id: {
+            contains: result,
+          },
+        },
+        {
+          custom_code: {
+            contains: result,
+          },
+        },
+      ],
+    },
+    select: {
+      id: true,
+      custom_code: true,
+      title: true,
+    },
+  });
+
+  return catalogId;
+};
+
+export default { create, getAll, get, update, del, getCustomCode, search };

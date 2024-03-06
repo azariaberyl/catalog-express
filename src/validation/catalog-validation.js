@@ -51,3 +51,5 @@ export const checkCodeValidation = Joi.object({
   username: Joi.string().max(100).required(),
   // customCode: Joi.string().max(50).pattern(`^(.)+\\(.)+$`, 'Custom Token Pattern').required(),
 });
+
+export const searchValidation = Joi.string().max(100).required();
