@@ -13,6 +13,7 @@ import ResponseError from '../error/response-error.js';
 import fs from 'fs';
 import multer from 'multer';
 import { imageWhitelist } from '../utils/global.js';
+import { Prisma } from '@prisma/client';
 
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -155,20 +156,6 @@ const update = async (request) => {
     throw new ResponseError(404, 'Catalog is not found');
   }
 
-  if (result.customToken) {
-    const code = await prismaClient.catalogContainer.findUnique({
-      where: {
-        custom_code: result.customToken,
-      },
-      select: {
-        custom_code: true,
-      },
-    });
-    if (code) {
-      throw new ResponseError(400, 'Custom code is already used. Please check it first :)');
-    }
-  }
-
   if (result.title) {
     data.title = result.title;
   }
@@ -185,35 +172,43 @@ const update = async (request) => {
     catalogs.push(...result.items);
   }
 
-  const updated = await prismaClient.$transaction(async (prisma) => {
-    const updatedContainer = await prisma.catalogContainer.update({
-      data,
-      where: {
-        id: catalog.id,
-      },
-    });
-    if (catalogs.length <= 0) return updatedContainer;
+  try {
+    const updated = await prismaClient.$transaction(async (prisma) => {
+      const updatedContainer = await prisma.catalogContainer.update({
+        data,
+        where: {
+          id: catalog.id,
+        },
+      });
+      if (catalogs.length <= 0) return updatedContainer;
 
-    const updatedCatalogs = await Promise.all(
-      catalogs.map((item) =>
-        prisma.catalog.upsert({
-          where: {
-            id: item.id,
-          },
-          update: item,
-          create: {
-            catalog_container: {
-              connect: { id: catalog.id },
+      const updatedCatalogs = await Promise.all(
+        catalogs.map((item) =>
+          prisma.catalog.upsert({
+            where: {
+              id: item.id,
             },
-            ...item,
-          },
-        })
-      )
-    );
-    return [updatedContainer, updatedCatalogs];
-  });
-
-  return updated;
+            update: item,
+            create: {
+              catalog_container: {
+                connect: { id: catalog.id },
+              },
+              ...item,
+            },
+          })
+        )
+      );
+      return [updatedContainer, updatedCatalogs];
+    });
+    return updated;
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      // The .code property can be accessed in a type-safe manner
+      if (e.code === 'P2002') {
+        throw new ResponseError(400, 'Custom code is already used. Please check it first :)');
+      }
+    }
+  }
 };
 
 const del = async (request) => {
@@ -257,7 +252,7 @@ const getCustomCode = async (req) => {
     where: {
       custom_code: { startsWith: result.username },
     },
-    select: { custom_code: true },
+    select: { custom_code: true, id: true },
   });
 
   return customCode;
