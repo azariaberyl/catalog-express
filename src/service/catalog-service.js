@@ -279,6 +279,7 @@ const search = async (req) => {
       id: true,
       custom_code: true,
       title: true,
+      user_id: true,
     },
   });
 
