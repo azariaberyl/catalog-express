@@ -28,7 +28,8 @@ model CatalogContainer {
   custom_code String?   @unique @db.VarChar(20)
   desc        String?   @db.Text
   catalogs    Catalog[]
-  User        User?     @relation(fields: [user_id], references: [username])
+
+  User User? @relation(fields: [user_id], references: [username])
 }
 
 model Catalog {
@@ -38,6 +39,15 @@ model Catalog {
   desc              String?          @db.Text
   imagePath         String?          @db.VarChar(100)
   catalog_container CatalogContainer @relation(fields: [container_id], references: [id])
+  tags              Tag[]
 
   @@map("catalogs")
+}
+
+model Tag {
+  id      String    @id @db.VarChar(100)
+  name    String    @db.VarChar(100)
+  catalog Catalog[]
+
+  @@map("tag")
 }
