@@ -37,9 +37,24 @@ export var upload = multer({
 });
 
 // TODO: create test
+// TODO
 const create = async (request) => {
   const result = validation(createCatalogValidation, request);
   const id = `${v4()}-${+new Date()}`;
+
+  if (result.customToken) {
+    const code = await prismaClient.catalogContainer.findUnique({
+      where: {
+        custom_code: result.customToken,
+      },
+      select: {
+        custom_code: true,
+      },
+    });
+    if (code) {
+      throw new ResponseError(400, 'Custom code is already used. Please check it first :)');
+    }
+  }
 
   if (result.items) {
     const catalog = await prismaClient.catalogContainer.create({
@@ -63,20 +78,6 @@ const create = async (request) => {
     });
 
     return catalog;
-  }
-
-  if (result.customToken) {
-    const code = await prismaClient.catalogContainer.findUnique({
-      where: {
-        custom_code: result.customToken,
-      },
-      select: {
-        custom_code: true,
-      },
-    });
-    if (code) {
-      throw new ResponseError(400, 'Custom code is already used. Please check it first :)');
-    }
   }
 
   const catalog = await prismaClient.catalogContainer.create({
@@ -139,6 +140,7 @@ const get = async (request) => {
   return catalog;
 };
 
+// TODO
 const update = async (request) => {
   const result = validation(updateCatalogValidation, request);
   const data = {};
