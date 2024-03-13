@@ -7,7 +7,7 @@ const errorMiddleware = async (err, req, res, next) => {
   res.json({
     errors: err.message,
   });
-  console.log(err.message);
+  console.log(err);
   res.end();
 };
 

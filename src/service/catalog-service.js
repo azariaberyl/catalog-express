@@ -37,7 +37,6 @@ export var upload = multer({
 });
 
 // TODO: create test
-// TODO
 const create = async (request) => {
   const result = validation(createCatalogValidation, request);
   const id = `${v4()}-${+new Date()}`;
@@ -57,23 +56,46 @@ const create = async (request) => {
   }
 
   if (result.items) {
-    const catalog = await prismaClient.catalogContainer.create({
-      data: {
-        title: result.title,
-        desc: result.desc,
-        id,
-        user_id: result.username,
-        custom_code: result.customToken,
-        catalogs: {
-          createMany: {
-            data: result.items,
-          },
-        },
+    const data = {
+      title: result.title,
+      desc: result.desc,
+      id,
+      user_id: result.username,
+      custom_code: result.customToken,
+      catalogs: {
+        create: result.items.map((_, i) => {
+          if (_.tags) {
+            return {
+              id: _.id,
+              title: _.title,
+              desc: _.desc,
+              imagePath: _.imagePath,
+              tags: {
+                connectOrCreate: _.tags.map((val) => ({
+                  where: {
+                    id: val.id,
+                  },
+                  create: {
+                    id: val.id,
+                    name: val.text,
+                  },
+                })),
+              },
+            };
+          }
+          return {
+            id: _.id,
+            title: _.title,
+            desc: _.desc,
+            imagePath: _.imagePath,
+          };
+        }),
       },
-      select: {
-        id: true,
-        title: true,
-        desc: true,
+    };
+    const catalog = await prismaClient.catalogContainer.create({
+      data,
+      include: {
+        catalogs: true,
       },
     });
 
@@ -130,7 +152,11 @@ const get = async (request) => {
       id: result.catalogId,
     },
     include: {
-      catalogs: true,
+      catalogs: {
+        include: {
+          tags: true,
+        },
+      },
     },
   });
 
@@ -182,12 +208,49 @@ const update = async (request) => {
         where: {
           id: catalog.id,
         },
+        select: {
+          catalogs: true,
+        },
       });
       if (catalogs.length <= 0) return updatedContainer;
+      const oldCatalogs = [...updatedContainer.catalogs];
+      const deleted = oldCatalogs.filter((val) => {
+        return !catalogs.some((_) => {
+          return val.id === _.id;
+        });
+      });
+      const deleteItems = await Promise.all(
+        deleted.map((val) => {
+          if (deleted.length > 0) {
+            return prisma.catalog.delete({
+              where: {
+                id: val.id,
+              },
+            });
+          }
+        })
+      );
 
       const updatedCatalogs = await Promise.all(
-        catalogs.map((item) =>
-          prisma.catalog.upsert({
+        catalogs.map((item) => {
+          if (item.tags) {
+            return prisma.catalog.update({
+              where: {
+                id: item.id,
+              },
+              data: {
+                ...item,
+                tags: {
+                  upsert: item.tags.map((_) => ({
+                    where: { id: _.id },
+                    update: { id: _.id, name: _.text },
+                    create: { id: _.id, name: _.text },
+                  })),
+                },
+              },
+            });
+          }
+          return prisma.catalog.upsert({
             where: {
               id: item.id,
             },
@@ -198,10 +261,10 @@ const update = async (request) => {
               },
               ...item,
             },
-          })
-        )
+          });
+        })
       );
-      return [updatedContainer, updatedCatalogs];
+      return [updatedContainer, updatedCatalogs, deleteItems];
     });
     return updated;
   } catch (e) {

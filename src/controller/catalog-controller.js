@@ -27,7 +27,6 @@ const create = async (req, res, next) => {
         });
     }
     await authFunction(req);
-    console.log(req.body);
     const result = await catalogService.create(req.body);
     res
       .status(201)

@@ -10,9 +10,15 @@ export const createCatalogValidation = Joi.object({
     .optional()
     .items({
       id: Joi.string().required(),
-      title: Joi.string().max(100).optional(),
-      desc: Joi.string().optional(),
+      title: Joi.string().max(100),
+      desc: Joi.string().allow('').optional(),
       imagePath: Joi.string().optional(),
+      tags: Joi.array()
+        .optional()
+        .items({
+          id: Joi.string().max(10),
+          text: Joi.string().max(10),
+        }),
     }),
 });
 
@@ -34,9 +40,15 @@ export const updateCatalogValidation = Joi.object({
     .optional()
     .items({
       id: Joi.string().required(),
-      title: Joi.string().max(100).optional(),
-      desc: Joi.string().optional(),
+      title: Joi.string().max(100),
+      desc: Joi.string().allow('').optional(),
       imagePath: Joi.string().optional(),
+      tags: Joi.array()
+        .optional()
+        .items({
+          id: Joi.string().max(10),
+          text: Joi.string().max(10),
+        }),
     }),
 });
 
