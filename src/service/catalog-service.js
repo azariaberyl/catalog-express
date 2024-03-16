@@ -178,6 +178,11 @@ const update = async (request) => {
     },
     select: {
       id: true,
+      catalogs: {
+        include: {
+          tags: true,
+        },
+      },
     },
   });
   if (!catalog) {
@@ -201,49 +206,37 @@ const update = async (request) => {
   }
 
   try {
-    const updated = await prismaClient.$transaction(async (prisma) => {
-      // Update catalog container
-      const updatedContainer = await prisma.catalogContainer.update({
-        data,
-        where: {
-          id: catalog.id,
-        },
-        select: {
-          catalogs: {
-            include: {
-              tags: true,
-            },
+    const updatedContainer = await prismaClient.catalogContainer.update({
+      data,
+      where: {
+        id: catalog.id,
+      },
+    });
+
+    // Deleted items
+    const oldCatalogs = [...catalog.catalogs];
+    const deleted = oldCatalogs.filter((val) => {
+      return !catalogs.some((_) => {
+        return val.id === _.id;
+      });
+    });
+    const deleteItems = await Promise.all(
+      deleted.map((val) => {
+        return prismaClient.catalog.delete({
+          where: {
+            id: val.id,
           },
-        },
-      });
-
-      // Deleted items
-      if (catalogs.length <= 0) return updatedContainer;
-      const oldCatalogs = [...updatedContainer.catalogs];
-      const deleted = oldCatalogs.filter((val) => {
-        return !catalogs.some((_) => {
-          return val.id === _.id;
         });
-      });
-      const deleteItems = await Promise.all(
-        deleted.map((val) => {
-          if (deleted.length > 0) {
-            return prisma.catalog.delete({
-              where: {
-                id: val.id,
-              },
-            });
-          }
-        })
-      );
+      })
+    );
 
-      // Deleted tags
-      const deletedTags = await Promise.all(
-        oldCatalogs.map((val) => {
-          const _newVal = catalogs.find((_) => _.id === val.id);
-          if (!_newVal) return;
+    // Deleted tags
+    const deletedTags = await Promise.all(
+      oldCatalogs.map((val) => {
+        const _newVal = catalogs.find((_) => _.id === val.id);
+        if (_newVal.tags) {
           const _deletedTags = val.tags.filter((_) => !_newVal.tags.some((_val) => _val.id === _.id));
-          return prisma.catalog.update({
+          return prismaClient.catalog.update({
             where: { id: val.id },
             data: {
               tags: {
@@ -251,46 +244,47 @@ const update = async (request) => {
               },
             },
           });
-        })
-      );
-
-      const updatedCatalogs = await Promise.all(
-        catalogs.map((item) => {
-          if (item.tags) {
-            return prisma.catalog.update({
-              where: {
-                id: item.id,
-              },
-              data: {
-                ...item,
-                tags: {
-                  connectOrCreate: item.tags.map((_) => ({
-                    where: { id: _.id },
-                    create: { id: _.id, name: _.text },
-                  })),
-                },
-              },
-            });
-          }
-
-          return prisma.catalog.upsert({
+        }
+      })
+    );
+    // Add items
+    if (catalogs.length <= 0) return updatedContainer;
+    const updatedCatalogs = await Promise.all(
+      catalogs.map((item) => {
+        if (item.tags) {
+          return prismaClient.catalog.update({
             where: {
               id: item.id,
             },
-            update: item,
-            create: {
-              catalog_container: {
-                connect: { id: catalog.id },
-              },
+            data: {
               ...item,
+              tags: {
+                connectOrCreate: item.tags.map((_) => ({
+                  where: { id: _.id },
+                  create: { id: _.id, name: _.text },
+                })),
+              },
             },
           });
-        })
-      );
-      return [updatedContainer, updatedCatalogs, deleteItems];
-    });
-    return updated;
+        }
+        return prismaClient.catalog.upsert({
+          where: {
+            id: item.id,
+          },
+          update: item,
+          create: {
+            ...item,
+            catalog_container: {
+              connect: { id: catalog.id },
+            },
+          },
+        });
+      })
+    );
+
+    return [updatedContainer, updatedCatalogs];
   } catch (e) {
+    console.log(e);
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       // The .code property can be accessed in a type-safe manner
       if (e.code === 'P2002') {
