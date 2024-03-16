@@ -166,7 +166,6 @@ const get = async (request) => {
   return catalog;
 };
 
-// TODO
 const update = async (request) => {
   const result = validation(updateCatalogValidation, request);
   const data = {};
@@ -203,15 +202,22 @@ const update = async (request) => {
 
   try {
     const updated = await prismaClient.$transaction(async (prisma) => {
+      // Update catalog container
       const updatedContainer = await prisma.catalogContainer.update({
         data,
         where: {
           id: catalog.id,
         },
         select: {
-          catalogs: true,
+          catalogs: {
+            include: {
+              tags: true,
+            },
+          },
         },
       });
+
+      // Deleted items
       if (catalogs.length <= 0) return updatedContainer;
       const oldCatalogs = [...updatedContainer.catalogs];
       const deleted = oldCatalogs.filter((val) => {
@@ -231,6 +237,23 @@ const update = async (request) => {
         })
       );
 
+      // Deleted tags
+      const deletedTags = await Promise.all(
+        oldCatalogs.map((val) => {
+          const _newVal = catalogs.find((_) => _.id === val.id);
+          if (!_newVal) return;
+          const _deletedTags = val.tags.filter((_) => !_newVal.tags.some((_val) => _val.id === _.id));
+          return prisma.catalog.update({
+            where: { id: val.id },
+            data: {
+              tags: {
+                disconnect: _deletedTags.map((_) => ({ id: _.id })),
+              },
+            },
+          });
+        })
+      );
+
       const updatedCatalogs = await Promise.all(
         catalogs.map((item) => {
           if (item.tags) {
@@ -241,15 +264,15 @@ const update = async (request) => {
               data: {
                 ...item,
                 tags: {
-                  upsert: item.tags.map((_) => ({
+                  connectOrCreate: item.tags.map((_) => ({
                     where: { id: _.id },
-                    update: { id: _.id, name: _.text },
                     create: { id: _.id, name: _.text },
                   })),
                 },
               },
             });
           }
+
           return prisma.catalog.upsert({
             where: {
               id: item.id,
@@ -271,7 +294,7 @@ const update = async (request) => {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       // The .code property can be accessed in a type-safe manner
       if (e.code === 'P2002') {
-        throw new ResponseError(400, 'Custom code is already used. Please check it first :)');
+        throw new ResponseError(400, e.message);
       }
     }
   }
