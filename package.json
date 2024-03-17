@@ -5,6 +5,7 @@
   "main": "src/main.js",
   "type": "module",
   "scripts": {
+    "start": "node .",
     "docker-mysql": "sudo docker container start mysql",
     "dev": "nodemon",
     "test": "jest",
