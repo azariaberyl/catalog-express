@@ -234,6 +234,7 @@ const update = async (request) => {
     const deletedTags = await Promise.all(
       oldCatalogs.map((val) => {
         const _newVal = catalogs.find((_) => _.id === val.id);
+        if (!_newVal) return;
         if (_newVal.tags) {
           const _deletedTags = val.tags.filter((_) => !_newVal.tags.some((_val) => _val.id === _.id));
           return prismaClient.catalog.update({
@@ -251,12 +252,21 @@ const update = async (request) => {
     if (catalogs.length <= 0) return updatedContainer;
     const updatedCatalogs = await Promise.all(
       catalogs.map((item) => {
-        if (item.tags) {
-          return prismaClient.catalog.update({
+        if (item.tags && item.tags.length > 0) {
+          return prismaClient.catalog.upsert({
             where: {
               id: item.id,
             },
-            data: {
+            update: {
+              ...item,
+              tags: {
+                set: item.tags.map((_) => ({
+                  id: _.id,
+                  name: _.text,
+                })),
+              },
+            },
+            create: {
               ...item,
               tags: {
                 connectOrCreate: item.tags.map((_) => ({
@@ -264,9 +274,13 @@ const update = async (request) => {
                   create: { id: _.id, name: _.text },
                 })),
               },
+              catalog_container: {
+                connect: { id: catalog.id },
+              },
             },
           });
         }
+
         return prismaClient.catalog.upsert({
           where: {
             id: item.id,
