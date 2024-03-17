@@ -6,22 +6,28 @@ it('Delete all', async () => {
   const id = v4();
   await prismaClient.user.create({
     data: {
-      email: 'sajd@gmail.com',
-      name: 'Test15',
-      password: 'test15',
+      email: `${id}@sasad.com`,
+      name: 'Test1123',
+      password: 'test1123',
       username: id,
       token: 'menghadeh',
     },
   });
-  await prismaClient.catalog.create({
+  await prismaClient.catalogContainer.create({
     data: {
       id: 'test15',
       title: 'test15',
-      desc: 'This is test15',
       user_id: id,
+      catalogs: {
+        create: {
+          id: '8374213123',
+          title: 'deletion',
+        },
+      },
     },
   });
 
   await prismaClient.catalog.deleteMany({});
+  await prismaClient.catalogContainer.deleteMany({});
   await prismaClient.user.deleteMany({});
 });

@@ -11,23 +11,43 @@ datasource db {
 }
 
 model User {
-  username String    @id @db.VarChar(100)
-  email    String    @unique @db.VarChar(100)
-  name     String?   @db.VarChar(100)
-  password String    @db.VarChar(100)
+  username String             @id @db.VarChar(100)
+  email    String             @unique @db.VarChar(100)
+  name     String?            @db.VarChar(100)
+  password String             @db.VarChar(100)
   token    String?
-  catalog  Catalog[]
+  Catalog  CatalogContainer[]
 
   @@map("users")
 }
 
+model CatalogContainer {
+  id          String    @id @db.VarChar(100)
+  user_id     String    @db.VarChar(100)
+  title       String    @db.VarChar(100)
+  custom_code String?   @unique @db.VarChar(20)
+  desc        String?   @db.Text
+  catalogs    Catalog[]
+
+  User User? @relation(fields: [user_id], references: [username])
+}
+
 model Catalog {
-  id        String  @id @db.VarChar(100)
-  user_id   String  @db.VarChar(100)
-  title     String  @db.VarChar(100)
-  desc      String? @db.Text
-  imagePath String? @db.VarChar(100)
-  user      User    @relation(fields: [user_id], references: [username])
+  id                String           @id @db.VarChar(100)
+  container_id      String           @db.VarChar(100)
+  title             String           @db.VarChar(100)
+  desc              String?          @db.Text
+  imagePath         String?          @db.VarChar(100)
+  catalog_container CatalogContainer @relation(fields: [container_id], references: [id])
+  tags              Tag[]
 
   @@map("catalogs")
+}
+
+model Tag {
+  id      String    @id @db.VarChar(100)
+  name    String    @db.VarChar(100)
+  catalog Catalog[]
+
+  @@map("tag")
 }

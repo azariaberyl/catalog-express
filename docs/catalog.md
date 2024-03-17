@@ -7,7 +7,15 @@
   ```json
   {
     "title": "New Catalog",
-    "description": "This is a new catalog"
+    "desc": "This is a new catalog",
+    "items": [
+      {
+        "id": "123456",
+        "title": "New Catalog",
+        "desc": "This is a new catalog",
+        "imagePath": "images/PATH"
+      }
+    ]
   }
   ```
   - File: Image
@@ -17,8 +25,7 @@
     "data": {
       "id": "Catalog id",
       "title": "New Catalog",
-      "description": "This is a new catalog",
-      "imagePath": "image/path.ext"
+      "descn": "This is a new catalog"
     }
   }
   ```
