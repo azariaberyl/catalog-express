@@ -1,6 +1,7 @@
 import { prismaClient } from '../application/database.js';
 import ResponseError from '../error/response-error.js';
 import jwt from 'jsonwebtoken';
+import { createImageDir } from '../utils/utils.js';
 
 const authFunction = async (req) => {
   const token = req.get('Authorization');
@@ -26,6 +27,7 @@ const authFunction = async (req) => {
 };
 
 const authMiddleware = async (req, res, next) => {
+  createImageDir('images');
   try {
     const token = req.get('Authorization');
     if (!token) {
