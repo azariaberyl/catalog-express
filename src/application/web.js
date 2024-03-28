@@ -3,11 +3,7 @@ import errorMiddleware from '../middleware/error-middleware.js';
 import publicApi from '../route/public-api.js';
 import privateApi from '../route/private-api.js';
 import cors from 'cors';
-
-const allowedOrigin = [
-  'https://catalog-nextjs-git-dev-azariaberyls-projects.vercel.app',
-  'https://catalog-nextjs.vercel.app',
-];
+import { allowedOrigin } from '../utils/global.js';
 
 export const app = express();
 app.use(
