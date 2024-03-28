@@ -5,8 +5,8 @@ import privateApi from '../route/private-api.js';
 import cors from 'cors';
 
 const allowedOrigin = [
-  'https://catalog-nextjs-kj401zihy-azariaberyls-projects.vercel.app/',
-  'https://catalog-nextjs.vercel.app/',
+  'https://catalog-nextjs-git-dev-azariaberyls-projects.vercel.app',
+  'https://catalog-nextjs.vercel.app',
 ];
 
 export const app = express();
