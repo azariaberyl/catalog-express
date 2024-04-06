@@ -16,27 +16,16 @@ import multer from 'multer';
 import { imageWhitelist } from '../utils/global.js';
 import { Prisma } from '@prisma/client';
 
-var storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'images/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
-
 export var upload = multer({
-  storage: storage,
   fileFilter: (req, file, cb) => {
     if (!imageWhitelist.includes(file.mimetype)) {
-      return cb(new ResponseError(400, 'file is not allowed'));
+      return cb(new ResponseError(400, 'file type is not allowed'));
     }
 
     cb(null, true);
   },
 });
 
-// TODO: create test
 const create = async (request) => {
   const result = validation(createCatalogValidation, request);
   const id = `${v4()}-${+new Date()}`;
@@ -321,7 +310,6 @@ const del = async (request) => {
     throw new ResponseError(404, 'Catalog is not found');
   }
 
-  // TODO: delete the corresponding image of each item
   const catalogItem = await prismaClient.catalog.deleteMany({
     where: {
       container_id: result.catalogId,
