@@ -74,7 +74,6 @@ describe('GET /catalog/:username', () => {
 
     it('not Get all catalog if invalid username', async () => {
       const result = await supertest(app).get('/catalog/invalid');
-      console.log(result.body);
 
       expect(result.status).toBe(404);
       expect(result.body.errors).toBeDefined();

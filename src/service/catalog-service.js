@@ -1,5 +1,10 @@
+import fs from 'fs';
+import multer from 'multer';
 import { v4 } from 'uuid';
 import { prismaClient } from '../application/database.js';
+import ResponseError from '../error/response-error.js';
+import { imageWhitelist } from '../utils/global.js';
+import { deleteFilesFromDrive } from '../utils/utils.js';
 import {
   checkCodeValidation,
   createCatalogValidation,
@@ -10,11 +15,6 @@ import {
   updateCatalogValidation,
 } from '../validation/catalog-validation.js';
 import { validation } from '../validation/validate.js';
-import ResponseError from '../error/response-error.js';
-import fs from 'fs';
-import multer from 'multer';
-import { imageWhitelist } from '../utils/global.js';
-import { Prisma } from '@prisma/client';
 
 export var upload = multer({
   fileFilter: (req, file, cb) => {
@@ -158,15 +158,14 @@ const get = async (request) => {
 const update = async (request) => {
   const result = validation(updateCatalogValidation, request);
   const data = {};
-  const catalogs = [];
 
-  const catalog = await prismaClient.catalogContainer.findFirst({
+  // Retrieve the catalog container from the database
+  const catalog = await prismaClient.catalogContainer.findUnique({
     where: {
       user_id: result.username,
       id: result.catalogId,
     },
-    select: {
-      id: true,
+    include: {
       catalogs: {
         include: {
           tags: true,
@@ -174,10 +173,13 @@ const update = async (request) => {
       },
     },
   });
+
+  // Check if catalog exists
   if (!catalog) {
     throw new ResponseError(404, 'Catalog is not found');
   }
 
+  // Prepare data object for updating
   if (result.title) {
     data.title = result.title;
   }
@@ -190,86 +192,34 @@ const update = async (request) => {
     data.custom_code = result.customToken;
   }
 
-  if (result.items) {
-    catalogs.push(...result.items);
-  }
+  // Update the catalog container
+  const updatedContainer = await prismaClient.catalogContainer.update({
+    data,
+    where: {
+      id: catalog.id,
+    },
+  });
 
-  try {
-    const updatedContainer = await prismaClient.catalogContainer.update({
-      data,
+  // Process items
+  if (result.items) {
+    const itemIds = result.items.map((item) => item.id);
+
+    // Delete items not included in the updated list
+    const deleteItems = await prismaClient.catalog.deleteMany({
       where: {
-        id: catalog.id,
+        catalog_container: {
+          id: catalog.id,
+        },
+        NOT: {
+          id: {
+            in: itemIds,
+          },
+        },
       },
     });
 
-    // Deleted items
-    const oldCatalogs = [...catalog.catalogs];
-    const deleted = oldCatalogs.filter((val) => {
-      return !catalogs.some((_) => {
-        return val.id === _.id;
-      });
-    });
-    const deleteItems = await Promise.all(
-      deleted.map((val) => {
-        return prismaClient.catalog.delete({
-          where: {
-            id: val.id,
-          },
-        });
-      })
-    );
-
-    // Deleted tags
-    const deletedTags = await Promise.all(
-      oldCatalogs.map((val) => {
-        const _newVal = catalogs.find((_) => _.id === val.id);
-        if (!_newVal) return;
-        if (_newVal.tags) {
-          const _deletedTags = val.tags.filter((_) => !_newVal.tags.some((_val) => _val.id === _.id));
-          return prismaClient.catalog.update({
-            where: { id: val.id },
-            data: {
-              tags: {
-                disconnect: _deletedTags.map((_) => ({ id: _.id })),
-              },
-            },
-          });
-        }
-      })
-    );
-    // Add items
-    if (catalogs.length <= 0) return updatedContainer;
-    const updatedCatalogs = await Promise.all(
-      catalogs.map((item) => {
-        if (item.tags && item.tags.length > 0) {
-          return prismaClient.catalog.upsert({
-            where: {
-              id: item.id,
-            },
-            update: {
-              ...item,
-              tags: {
-                set: item.tags.map((_) => ({
-                  id: _.id,
-                  name: _.text,
-                })),
-              },
-            },
-            create: {
-              ...item,
-              tags: {
-                connectOrCreate: item.tags.map((_) => ({
-                  where: { id: _.id },
-                  create: { id: _.id, name: _.text },
-                })),
-              },
-              catalog_container: {
-                connect: { id: catalog.id },
-              },
-            },
-          });
-        }
-
+    const updatedItems = await Promise.all(
+      result.items.map((item) => {
         return prismaClient.catalog.upsert({
           where: {
             id: item.id,
@@ -285,49 +235,65 @@ const update = async (request) => {
       })
     );
 
-    return [updatedContainer, updatedCatalogs];
-  } catch (e) {
-    console.log(e);
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      // The .code property can be accessed in a type-safe manner
-      if (e.code === 'P2002') {
-        throw new ResponseError(400, e.message);
-      }
-    }
+    // Find IDs of deleted items
+    const deletedImgs = catalog.catalogs
+      .filter((oldItem) => !updatedItems.some((updatedItem) => updatedItem.id === oldItem.id))
+      .map((deletedItem) => deletedItem.imagePath.split('d/')[1]);
+
+    // Delete the corresponding image based on deleted id
+    deleteFilesFromDrive(deletedImgs);
+
+    // Return the updated container and items
+    return [updatedContainer, updatedItems];
   }
+
+  // If no items were provided, return only the updated container
+  return updatedContainer;
 };
 
 const del = async (request) => {
   const result = validation(deleteCatalogValidation, request);
-  const catalogCount = await prismaClient.catalogContainer.count({
+
+  // Check if the catalog exists
+  const catalog = await prismaClient.catalogContainer.findUnique({
     where: {
       user_id: result.username,
       id: result.catalogId,
     },
+    include: {
+      catalogs: {
+        select: {
+          imagePath: true,
+        },
+      },
+    },
   });
 
-  if (catalogCount !== 1) {
+  if (!catalog) {
     throw new ResponseError(404, 'Catalog is not found');
   }
 
-  const catalogItem = await prismaClient.catalog.deleteMany({
+  // Extract image IDs from image paths
+  const deletedImgIds = catalog.catalogs.flatMap((item) => (item.imagePath ? item.imagePath.split('d/')[1] : []));
+  // Delete files from drive using the extracted image IDs
+  deleteFilesFromDrive(deletedImgIds);
+
+  // Delete the catalog items
+  await prismaClient.catalog.deleteMany({
     where: {
       container_id: result.catalogId,
     },
   });
 
-  const catalog = await prismaClient.catalogContainer.delete({
+  // Delete the catalog container
+  const deletedCatalogContainer = await prismaClient.catalogContainer.delete({
     where: {
       user_id: result.username,
       id: result.catalogId,
     },
   });
 
-  if (catalog.imagePath) {
-    fs.unlinkSync(catalog.imagePath);
-  }
-
-  return [catalog, catalogItem];
+  return [deletedCatalogContainer, catalog.catalogs];
 };
 
 const getCustomCode = async (req) => {

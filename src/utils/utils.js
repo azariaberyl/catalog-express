@@ -15,7 +15,6 @@ const credentials = JSON.parse(process.env.CREDENTIALS);
  * @throws {Error} Throws an error if the upload fails.
  */
 export async function uploadFileToDrive(buffer, name, mimeType) {
-  console.log(credentials);
   try {
     // Get credentials and build service
     const auth = new google.auth.GoogleAuth({
@@ -26,7 +25,7 @@ export async function uploadFileToDrive(buffer, name, mimeType) {
     const service = google.drive({ version: 'v3', auth });
     const requestBody = {
       name: name,
-      // parents: ['1manBHIVJxUFvtUMZwpvl4Wy84nOrJkKD'], // Specify the parent folder ID
+      parents: ['1manBHIVJxUFvtUMZwpvl4Wy84nOrJkKD'], // Specify the parent folder ID
       fields: 'id',
     };
     const media = {
@@ -56,31 +55,73 @@ export async function uploadFileToDrive(buffer, name, mimeType) {
   }
 }
 
+/**
+ * Handles file uploads from the request.
+ * @param {import('express').Request} req - The HTTP request.
+ * @returns {Promise<void>} A Promise that resolves when all file uploads are handled.
+ * @throws {ResponseError} Throws an error if the file type is not allowed.
+ */
 export async function handleFileUploads(req) {
   if (req.files) {
     await Promise.all(
       req.files.map(async (file) => {
-        if (file.originalname === 'undefined') return;
-        file.name = `${req.body.username}/${file.originalname}`;
+        file.name = `${file.originalname}`;
         const meta = await fileTypeFromBuffer(file.buffer);
-        if (!imageWhitelist.includes(meta.mime)) {
-          throw new ResponseError(400, 'File type not allowed');
+        if (meta) {
+          if (!imageWhitelist.includes(meta.mime)) {
+            throw new ResponseError(400, 'File type not allowed');
+          }
+          const imgId = await uploadFileToDrive(file.buffer, file.name, file.mimetype);
+          file.imagePath =
+            file.name && file.name !== 'undefined'
+              ? `${file.name}o.ohttps://lh3.googleusercontent.com/d/${imgId}`
+              : null;
         }
-        const imgId = await uploadFileToDrive(file.buffer, file.name, file.mimetype);
-        file.imagePath = `https://lh3.googleusercontent.com/d/${imgId}`;
       })
     );
   }
 }
 
+/**
+ * Updates item paths based on uploaded files.
+ * @param {import('express').Request} req - The HTTP request.
+ */
 export function updateItemPaths(req) {
   if (req.body.items) {
     req.body.items = JSON.parse(req.body.items);
     if (req.files.length > 0) {
       req.body.items = req.body.items.map((item, i) => {
-        const theImg = req.files.find((file, _i) => _i === i);
+        const theImg = req.files[i];
         return theImg ? { ...item, imagePath: theImg.imagePath } : item;
       });
     }
+  }
+}
+
+/**
+ * Deletes multiple files from Google Drive.
+ * @param {string[]} fileIds - An array of file IDs to delete.
+ * @returns {Promise<void>} A Promise that resolves when all files are successfully deleted.
+ * @throws {Error} Throws an error if any deletion fails.
+ */
+export async function deleteFilesFromDrive(fileIds) {
+  try {
+    // Get credentials and build service
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: 'https://www.googleapis.com/auth/drive',
+    });
+    const service = google.drive({ version: 'v3', auth });
+
+    // Delete each file
+    await Promise.all(
+      fileIds.map(async (fileId) => {
+        await service.files.delete({
+          fileId: fileId,
+        });
+      })
+    );
+  } catch (err) {
+    throw new ResponseError(500, 'Failed to delete files from Google Drive');
   }
 }

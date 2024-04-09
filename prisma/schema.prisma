@@ -39,7 +39,7 @@ model Catalog {
   container_id      String           @db.VarChar(100)
   title             String           @db.VarChar(100)
   desc              String?          @db.Text
-  imagePath         String?          @db.VarChar(100)
+  imagePath         String?          @db.Text
   catalog_container CatalogContainer @relation(fields: [container_id], references: [id])
   tags              Tag[]
 
