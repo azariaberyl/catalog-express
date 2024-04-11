@@ -206,14 +206,13 @@ const update = async (request) => {
       result.items.map(async (item) => {
         // Find the item in the database
         const existingItem = catalog.catalogs.find((catalogItem) => catalogItem.id === item.id);
-        const formattedTags = item.tags
-          ? {
-              connectOrCreate: item.tags.map((tag) => ({
-                where: { id: tag.id },
-                create: { id: tag.id, name: tag.text },
-              })),
-            }
-          : [];
+        const formattedTags = item.tags && {
+          connectOrCreate: item.tags.map((tag) => ({
+            where: { id: tag.id },
+            create: { id: tag.id, name: tag.text },
+          })),
+        };
+
         // If the item exists, update it
         if (existingItem) {
           // Update the item
@@ -254,7 +253,6 @@ const update = async (request) => {
       catalog.catalogs.map((val) => {
         if (result.items.length === 0) return;
         const _newVal = result.items.find((_) => _.id === val.id);
-        console.log(_newVal);
         if (!_newVal) return;
         if (_newVal.tags) {
           const _deletedTags = val.tags.filter((_) => !_newVal.tags.some((_val) => _val.id === _.id));
@@ -273,7 +271,7 @@ const update = async (request) => {
     // Find IDs of deleted items
     const deletedImgs = catalog.catalogs
       .filter((oldItem) => !updatedItems.some((updatedItem) => updatedItem.id === oldItem.id))
-      .map((deletedItem) => deletedItem.imagePath.split('d/')[1]);
+      .flatMap((deletedItem) => (deletedItem.imagePath ? deletedItem.imagePath.split('d/')[1] : []));
 
     // Delete the corresponding image based on deleted id
     deleteFilesFromDrive(deletedImgs);
