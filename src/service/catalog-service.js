@@ -202,36 +202,71 @@ const update = async (request) => {
 
   // Process items
   if (result.items) {
-    const itemIds = result.items.map((item) => item.id);
-
-    // Delete items not included in the updated list
-    const deleteItems = await prismaClient.catalog.deleteMany({
-      where: {
-        catalog_container: {
-          id: catalog.id,
-        },
-        NOT: {
-          id: {
-            in: itemIds,
-          },
-        },
-      },
-    });
-
     const updatedItems = await Promise.all(
-      result.items.map((item) => {
-        return prismaClient.catalog.upsert({
-          where: {
-            id: item.id,
-          },
-          update: item,
-          create: {
-            ...item,
-            catalog_container: {
-              connect: { id: catalog.id },
+      result.items.map(async (item) => {
+        // Find the item in the database
+        const existingItem = catalog.catalogs.find((catalogItem) => catalogItem.id === item.id);
+        const formattedTags = item.tags
+          ? {
+              connectOrCreate: item.tags.map((tag) => ({
+                where: { id: tag.id },
+                create: { id: tag.id, name: tag.text },
+              })),
+            }
+          : [];
+        // If the item exists, update it
+        if (existingItem) {
+          // Update the item
+          const id = item.id;
+          const _item = { ...item };
+          delete _item.id;
+          return prismaClient.catalog.update({
+            where: { id },
+            data: { ..._item, tags: formattedTags, catalog_container: { connect: { id: catalog.id } } },
+          });
+        } else {
+          // If the item doesn't exist, create it
+          return prismaClient.catalog.create({
+            data: {
+              ...item,
+              tags: formattedTags,
+              catalog_container: { connect: { id: catalog.id } },
             },
-          },
-        });
+          });
+        }
+      })
+    );
+
+    // Find IDs of deleted items
+    const deletedItemIds = catalog.catalogs
+      .filter((oldItem) => !result.items.some((updatedItem) => updatedItem.id === oldItem.id))
+      .map((deletedItem) => deletedItem.id);
+
+    // Delete the corresponding items
+    await Promise.all(
+      deletedItemIds.map(async (deletedItemId) => {
+        await prismaClient.catalog.delete({ where: { id: deletedItemId } });
+      })
+    );
+
+    // Delete tags
+    const deletedTags = await Promise.all(
+      catalog.catalogs.map((val) => {
+        if (result.items.length === 0) return;
+        const _newVal = result.items.find((_) => _.id === val.id);
+        console.log(_newVal);
+        if (!_newVal) return;
+        if (_newVal.tags) {
+          const _deletedTags = val.tags.filter((_) => !_newVal.tags.some((_val) => _val.id === _.id));
+          return prismaClient.catalog.update({
+            where: { id: val.id },
+            data: {
+              tags: {
+                disconnect: _deletedTags.map((_) => ({ id: _.id })),
+              },
+            },
+          });
+        }
       })
     );
 

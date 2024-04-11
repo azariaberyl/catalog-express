@@ -47,6 +47,7 @@ export async function uploadFileToDrive(buffer, name, mimeType) {
       },
     });
 
+    console.log(file.data.id);
     return file.data.id;
   } catch (err) {
     if (err instanceof Error) {
