@@ -236,17 +236,37 @@ const update = async (request) => {
       })
     );
 
+    // Find image ID of deleted items
+    const deletedImgs = catalog.catalogs
+      .filter((oldItem) => !updatedItems.some((updatedItem) => updatedItem.id === oldItem.id))
+      .flatMap((deletedItem) => (deletedItem.imagePath ? deletedItem.imagePath.split('d/')[1] : []));
+
     // Find IDs of deleted items
     const deletedItemIds = catalog.catalogs
       .filter((oldItem) => !result.items.some((updatedItem) => updatedItem.id === oldItem.id))
       .map((deletedItem) => deletedItem.id);
 
+    // Find changed images by used and going to be deleted
+    const deletedChangedImgIds = catalog.catalogs.flatMap((oldItem) => {
+      if (!oldItem.imagePath) return [];
+      const _updatedItem = updatedItems.find((updatedItem) => updatedItem.id === oldItem.id);
+      if (!_updatedItem) return [];
+      if (!_updatedItem.imagePath) return [];
+
+      return _updatedItem.imagePath.split('d/')[1] === oldItem.imagePath.split('d/')[1]
+        ? []
+        : oldItem.imagePath.split('d/')[1];
+    });
+
     // Delete the corresponding items
-    await Promise.all(
-      deletedItemIds.map(async (deletedItemId) => {
+    // Delete the corresponding image based on deleted id
+    await Promise.all([
+      ...deletedItemIds.map(async (deletedItemId) => {
         await prismaClient.catalog.delete({ where: { id: deletedItemId } });
-      })
-    );
+      }),
+      deleteFilesFromDrive(deletedImgs),
+      deleteFilesFromDrive(deletedChangedImgIds),
+    ]);
 
     // Delete tags
     const deletedTags = await Promise.all(
@@ -267,14 +287,6 @@ const update = async (request) => {
         }
       })
     );
-
-    // Find IDs of deleted items
-    const deletedImgs = catalog.catalogs
-      .filter((oldItem) => !updatedItems.some((updatedItem) => updatedItem.id === oldItem.id))
-      .flatMap((deletedItem) => (deletedItem.imagePath ? deletedItem.imagePath.split('d/')[1] : []));
-
-    // Delete the corresponding image based on deleted id
-    deleteFilesFromDrive(deletedImgs);
 
     // Return the updated container and items
     return [updatedContainer, updatedItems];

@@ -47,7 +47,6 @@ export async function uploadFileToDrive(buffer, name, mimeType) {
       },
     });
 
-    console.log(file.data.id);
     return file.data.id;
   } catch (err) {
     if (err instanceof Error) {
@@ -117,7 +116,7 @@ export async function deleteFilesFromDrive(fileIds) {
     // Delete each file
     await Promise.all(
       fileIds.map(async (fileId) => {
-        await service.files.delete({
+        return service.files.delete({
           fileId: fileId,
         });
       })
