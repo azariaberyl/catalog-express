@@ -7,17 +7,7 @@
   "scripts": {
     "start": "node .",
     "build": "rollup --config",
-    "docker-mysql": "sudo docker container start mysql",
-    "dev": "nodemon",
-    "test": "jest",
-    "test-user": "jest user.test.js",
-    "test-catalog": "jest catalog.test.js",
-    "test-index": "jest index.test.js"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.[t|j]sx?$": "babel-jest"
-    }
+    "dev": "nodemon"
   },
   "author": "Azaria Beryl",
   "license": "ISC",
