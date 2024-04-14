@@ -2,10 +2,11 @@
   "name": "catalog-express",
   "version": "1.0.0",
   "description": "",
-  "main": "src/main.js",
+  "main": "app.js",
   "type": "module",
   "scripts": {
     "start": "node .",
+    "build": "rollup --config",
     "docker-mysql": "sudo docker container start mysql",
     "dev": "nodemon",
     "test": "jest",
@@ -36,12 +37,6 @@
   "devDependencies": {
     "@babel/plugin-transform-runtime": "^7.23.6",
     "@babel/preset-env": "^7.23.6",
-    "@types/jest": "^29.5.11",
-    "@types/supertest": "^6.0.1",
-    "babel-jest": "^29.7.0",
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.2",
-    "prisma": "^5.7.0",
-    "supertest": "^6.3.3"
+    "prisma": "^5.7.0"
   }
 }

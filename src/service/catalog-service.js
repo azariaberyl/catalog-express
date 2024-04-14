@@ -1,4 +1,3 @@
-import fs from 'fs';
 import multer from 'multer';
 import { v4 } from 'uuid';
 import { prismaClient } from '../application/database.js';
