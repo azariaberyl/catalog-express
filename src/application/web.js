@@ -6,11 +6,7 @@ import cors from 'cors';
 import { allowedOrigin } from '../utils/global.js';
 
 export const app = express();
-app.use(
-  cors({
-    origin: allowedOrigin,
-  })
-);
+app.use(cors());
 app.use(express.json());
 app.use(publicApi);
 app.use(privateApi);

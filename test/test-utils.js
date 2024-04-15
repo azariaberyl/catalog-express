@@ -1,5 +1,5 @@
 import { prismaClient } from '../src/application/database';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const createTestUser = async (username = '') => {
   await prismaClient.user.create({
