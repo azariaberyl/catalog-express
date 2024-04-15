@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { prismaClient } from '../application/database.js';
 import ResponseError from '../error/response-error.js';
 import {
