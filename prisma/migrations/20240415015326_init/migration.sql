@@ -26,7 +26,7 @@ CREATE TABLE "catalogs" (
     "container_id" VARCHAR(100) NOT NULL,
     "title" VARCHAR(100) NOT NULL,
     "desc" TEXT,
-    "imagePath" VARCHAR(100),
+    "imagePath" TEXT,
 
     CONSTRAINT "catalogs_pkey" PRIMARY KEY ("id")
 );
