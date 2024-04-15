@@ -1,3 +1,5 @@
+import { terser } from 'rollup-plugin-terser';
+
 // rollup.config.mjs
 export default {
   input: 'src/main.js',
@@ -5,4 +7,5 @@ export default {
     file: 'app.js',
     format: 'es',
   },
+  plugins: [terser()],
 };
