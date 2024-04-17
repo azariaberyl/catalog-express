@@ -1,6 +1,6 @@
-import bcrypt from 'bcryptjs';
 import { prismaClient } from '../application/database.js';
 import ResponseError from '../error/response-error.js';
+import bcrypt from '../utils/bcryptjs.js';
 import {
   getUserValidation,
   loginUserValidation,
@@ -37,7 +37,7 @@ const register = async (request) => {
     throw new ResponseError(400, 'Email already exists');
   }
 
-  user.password = await bcrypt.hash(user.password, 10);
+  user.password = bcrypt.hashSync(user.password, 10);
   const result = await prismaClient.user.create({
     data: user,
     select: {
@@ -67,7 +67,7 @@ const login = async (request) => {
     throw new ResponseError(400, 'Invalid email or password');
   }
 
-  const isPasswordValid = await bcrypt.compare(result.password, user.password);
+  const isPasswordValid = bcrypt.compareSync(result.password, user.password);
   if (isPasswordValid) {
     const token = jwt.sign(
       {
@@ -112,7 +112,7 @@ const update = async (request) => {
     data.name = result.name;
   }
   if (result.password) {
-    data.password = await bcrypt.hash(result.password, 10);
+    data.password = bcrypt.hashSync(result.password, 10);
   }
 
   return prismaClient.user.update({

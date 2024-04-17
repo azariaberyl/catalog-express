@@ -9,6 +9,8 @@ export default {
   output: {
     file: 'app.js',
     format: 'esm',
+    plugins: [terser()],
   },
-  plugins: [terser(), nodeResolve(), commonjs(), json()],
+  external: ['@prisma/client'],
+  plugins: [nodeResolve({ preferBuiltins: false }), commonjs(), json()],
 };
