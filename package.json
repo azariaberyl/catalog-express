@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node .",
     "build": "rollup --config",
-    "dev": "nodemon"
+    "dev": "nodemon src/main.js"
   },
   "author": "Azaria Beryl",
   "license": "ISC",
@@ -29,6 +29,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
+    "nodemon": "^3.1.0",
     "prisma": "^5.7.0"
   }
 }
