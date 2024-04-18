@@ -9,7 +9,7 @@ export default {
   output: {
     file: 'dist/main.js',
     format: 'esm',
-    plugins: [terser()],
+    // plugins: [terser()],
   },
   external: ['@prisma/client'],
   plugins: [nodeResolve({ preferBuiltins: false }), commonjs(), json()],
