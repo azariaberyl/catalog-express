@@ -7,6 +7,18 @@ import { imageWhitelist } from './global.js';
 const credentials = JSON.parse(process.env.CREDENTIALS);
 
 /**
+ * Check if the required environment variables are present.
+ * @param {string[]} variables - An array of required environment variable names.
+ * @throws {Error} If any required environment variable is missing.
+ */
+export function checkEnvVariables(variables) {
+  const missingVariables = variables.filter((variable) => !process.env[variable]);
+  if (missingVariables.length > 0) {
+    throw new Error(`Missing environment variables: ${missingVariables.join(', ')}`);
+  }
+}
+
+/**
  * Uploads a file to Google Drive and sets its permission to public.
  * @param {Buffer} buffer - The file content buffer to upload.
  * @param {string} name - The name of the file.
