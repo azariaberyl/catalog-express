@@ -27,7 +27,7 @@ model CatalogContainer {
   id          String    @id @db.VarChar(100)
   user_id     String    @db.VarChar(100)
   title       String    @db.VarChar(100)
-  custom_code String?   @unique @db.VarChar(20)
+  custom_code String?   @unique
   desc        String?   @db.Text
   catalogs    Catalog[]
 
