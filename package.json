@@ -2,11 +2,10 @@
   "name": "catalog-express",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "dist/main.js",
   "type": "module",
   "scripts": {
     "start": "node .",
-    "prebuild": "npm install prisma @rollup/plugin-terser @rollup/plugin-node-resolve cors dotenv express file-type googleapis joi jsonwebtoken multer uuid @rollup/plugin-commonjs @rollup/plugin-json",
     "build": "rollup --config",
     "postbuild": "npm uninstall prisma @rollup/plugin-terser @rollup/plugin-node-resolve bcryptjs cors dotenv express file-type googleapis joi jsonwebtoken multer uuid @rollup/plugin-commonjs @rollup/plugin-json",
     "dev": "nodemon src/main.js"
