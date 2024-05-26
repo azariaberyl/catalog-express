@@ -1,9 +1,15 @@
-import ResponseError from '../error/response-error.js';
 import { authFunction } from '../middleware/auth-middleware.js';
 import catalogService from '../service/catalog-service.js';
-import { imageWhitelist } from '../utils/global.js';
 import { handleFileUploads, updateItemPaths } from '../utils/utils.js';
 
+/**
+ * Creates a new catalog item.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @returns {Promise<void>} - A promise that resolves when the catalog item is created.
+ */
 const create = async (req, res, next) => {
   try {
     await authFunction(req);

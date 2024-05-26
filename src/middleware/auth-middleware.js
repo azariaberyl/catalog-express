@@ -30,6 +30,7 @@ const authMiddleware = async (req, res, next) => {
     const token = req.get('Authorization');
     if (!token) {
       next('router'); // call next('router') to pass control back out of the router instance.
+      return;
     }
     const decoded = jwt.verify(token, process.env.API_SECRET); // Verify the token
 

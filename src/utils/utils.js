@@ -125,3 +125,19 @@ export async function deleteFilesFromDrive(fileIds) {
     throw new ResponseError(500, 'Failed to delete files from Google Drive');
   }
 }
+
+/**
+ * Fetches a user from the database based on the provided ID.
+ * If no ID is provided, it fetches all users.
+ *
+ * @param {Object} prismaClient - The Prisma client instance.
+ * @param {string} [id=''] - The ID of the user to fetch.
+ * @returns {Promise<Object|null>} - A promise that resolves to the fetched user object, or null if not found.
+ */
+export async function fetchUser(prismaClient, id = '') {
+  return prismaClient.user.findUnique({
+    where: {
+      id,
+    },
+  });
+}
